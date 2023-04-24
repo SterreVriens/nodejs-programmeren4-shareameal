@@ -22,13 +22,15 @@ describe('UC-201 Registreren als nieuwe user', () => {
   it('TC-201-5 - User succesvol geregistreerd', (done) => {
     // Nieuwe gebruiker om te testen
     const newUser = {
+      id : '4',
       firstName: 'Hendrik',
       lastName: 'van Dam',
       email: 'hvd@server.nl',
       street: 'Straatnaam 123',
       city: 'Plaatsnaam',
+      isActive: true,
       password: 'test1234',
-      phoneNumber: '0612345678',
+      phoneNumber: '061234567',
       token : 'ABC'
     };
   
