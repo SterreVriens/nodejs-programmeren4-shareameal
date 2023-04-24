@@ -21,8 +21,8 @@ app.use('*', (req, res, next) => {
 //UC-102 Opvragen van systeeminformatie
 app.get('/api/info', (req, res) => {
   logger.info('Haal server info op')
-  res.status(200).json({
-    'status': 200,
+  res.status(201).json({
+    'status': 201,
     'message': 'Server info-endpoint',
     'data': {
       'studentName': 'Sterre Vriens',

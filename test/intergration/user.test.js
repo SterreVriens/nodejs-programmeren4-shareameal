@@ -2,12 +2,14 @@ const assert = require('assert');
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const server = require('../../app');
+const expect = chai.expect;
 
 chai.should();
 chai.use(chaiHttp);
 
 describe('UC-201 Registreren als nieuwe user', () => {
-  it('TC-201-1 - Verplicht veld ontbreekt', (done) => {
+  
+  it.skip('TC-201-1 - Verplicht veld ontbreekt', (done) => {
     // Testen die te maken hebben met authenticatie of het valideren van
     // verplichte velden kun je nog niet uitvoeren. Voor het eerste inlevermoment
     // mag je die overslaan.
@@ -16,41 +18,49 @@ describe('UC-201 Registreren als nieuwe user', () => {
     done();
   });
 
+
   it('TC-201-5 - User succesvol geregistreerd', (done) => {
-    // nieuwe user waarmee we testen
+    // Nieuwe gebruiker om te testen
     const newUser = {
       firstName: 'Hendrik',
       lastName: 'van Dam',
-      emailAdress: 'hvd@server.nl'
+      email: 'hvd@server.nl',
+      street: 'Straatnaam 123',
+      city: 'Plaatsnaam',
+      password: 'test1234',
+      phoneNumber: '0612345678',
+      token : 'ABC'
     };
-
-    // Voer de test uit
+  
+    // Uitvoeren van de test
     chai
       .request(server)
-      .post('/api/register')
+      .post('/api/user')
       .send(newUser)
       .end((err, res) => {
         assert(err === null);
-
+  
+        res.should.have.status(201);
         res.body.should.be.an('object');
+  
         let { data, message, status } = res.body;
-
-        status.should.equal(200);
-        message.should.be.a('string').that.contains('toegevoegd');
+  
+        status.should.equal(201);
+        message.should.be.a('string').that.contains('User created');
         data.should.be.an('object');
 
-        // OPDRACHT!
-        // Bekijk zelf de API reference op https://www.chaijs.com/api/bdd/
-        // Daar zie je welke chained functions je nog meer kunt gebruiken.
-        data.should.include({ id: 2 });
-        data.should.not.include({ id: 0 });
-        data.id.should.equal(2);
-        data.firstName.should.equal('Hendrik');
-
+        data.should.have.property('firstName').that.is.a('string').and.equals(newUser.firstName);
+        data.should.have.property('lastName').that.is.a('string').and.equals(newUser.lastName);
+        data.should.have.property('email').that.is.a('string').and.equals(newUser.email);
+        data.should.have.property('street').that.is.a('string').and.equals(newUser.street);
+        data.should.have.property('city').that.is.a('string').and.equals(newUser.city);
+        data.should.have.property('password').that.is.a('string');
+        data.should.have.property('phoneNumber').that.is.a('string').and.equals(newUser.phoneNumber);
+  
         done();
       });
   });
-});
+});  
 
 describe('UC-202 Opvragen van overzicht van users', () => {
   it('TC-202-1 - Toon alle gebruikers, minimaal 2', (done) => {
@@ -65,13 +75,9 @@ describe('UC-202 Opvragen van overzicht van users', () => {
         let { data, message, status } = res.body;
 
         status.should.equal(200);
-        message.should.be.a('string').equal('User getAll endpoint');
+        message.should.be.a('string').equal('Get all users');
+        expect(res.body.data.length).to.be.gte(2);
 
-        // Je kunt hier nog testen dat er werkelijk 2 userobjecten in het array zitten.
-        // Maarrr: omdat we in een eerder test een user hebben toegevoegd, bevat
-        // de database nu 3 users...
-        // We komen hier nog op terug.
-        data.should.be.an('array').that.has.length(3);
 
         done();
       });
@@ -99,4 +105,99 @@ describe('UC-202 Opvragen van overzicht van users', () => {
         done();
       });
   });
+});
+
+describe('UC-203 Opvragen van gebruikersprofiel', () =>{
+
+  it('TC-203-2 Gebruiker is ingelogd met geldig token.', function(done) {
+    const authHeader = 'WXYZ'
+    // Voer de test uit
+    chai
+      .request(server)
+      .get('/api/user/profile')
+      .set('Authorization', authHeader)
+      .end((err, res) => {
+        assert(err === null);
+
+        res.body.should.be.an('object');
+        let { data, message, status } = res.body;
+
+        status.should.equal(200);
+        message.should.be.a('string').equal(`Get user profile for user with token ${authHeader}`);
+
+        // Controleer of de gebruikersgegevens correct zijn geretourneerd
+        data.should.be.an('object');
+
+        data.should.have.property('firstName').that.is.a('string');
+        data.should.have.property('lastName').that.is.a('string');
+        data.should.have.property('email').that.is.a('string');
+        data.should.have.property('street').that.is.a('string');
+        data.should.have.property('city').that.is.a('string');
+        data.should.have.property('password').that.is.a('string');
+        data.should.have.property('phoneNumber').that.is.a('string');
+        data.should.have.property('token').that.is.a('string').equal(authHeader)
+
+        done();
+      });
+    });
+});
+
+describe('UC-204 Opvragen van usergegevens bij ID', () =>{
+
+  it('TC-204-3 Gebruiker-ID bestaat', function(done) {
+    const userId = 1;
+  
+    chai
+      .request(server)
+      .get(`/api/user/${userId}`)
+      .end((err, res) => {
+        assert(err === null);
+  
+        res.body.should.be.an('object');
+        let { data, message, status } = res.body;
+  
+        status.should.equal(200);
+        message.should.be.a('string').equal(`Get user with id ${userId}`);
+  
+        data.should.be.an('object');
+        data.should.have.property('firstName').that.is.a('string');
+        data.should.have.property('lastName').that.is.a('string');
+        data.should.have.property('email').that.is.a('string');
+        data.should.have.property('street').that.is.a('string');
+        data.should.have.property('city').that.is.a('string');
+        data.should.have.property('password');
+        data.should.have.property('phoneNumber');
+  
+        done();
+      });
+  });
+  
+});
+
+describe('UC-206 Verwijderen van user', () =>{
+
+  it('TC-206-4 Gebruiker succesvol verwijderd', function(done) {
+    const userId = 1; // veronderstel dat dit het te verwijderen gebruikersid is
+    chai
+      .request(server)
+      .delete(`/api/user/${userId}`)
+      .end((err, res) => {
+        assert(err === null);
+  
+        res.body.should.be.an('object');
+        let { data, message, status } = res.body;
+  
+        status.should.equal(202);
+        message.should.be.a('string').equal(`User is deleted`);
+  
+        // Controleer of de gebruiker succesvol is verwijderd
+        data.should.be.an('array');
+        data.should.have.lengthOf(2);
+        data.should.not.deep.include({ id: 1 }); // de verwijderde gebruiker mag niet meer in de data zitten
+  
+        done();
+      });
+  });
+  
+  
 });

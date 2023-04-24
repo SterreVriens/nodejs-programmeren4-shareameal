@@ -53,7 +53,8 @@ const userController = {
             'city': req.body.city,
             'email': email,
             'password': req.body.password,
-            'phoneNumber': req.body.phoneNumber
+            'phoneNumber': req.body.phoneNumber,
+            'token' : req.body.token
           };
           dummyUserData.push(newUser);
     
