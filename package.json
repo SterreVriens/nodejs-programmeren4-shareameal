@@ -1,0 +1,21 @@
+{
+  "name": "shareameal",
+  "version": "1.0.0",
+  "description": "An api to save meals",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js",
+    "test": "mocha -reporter spec test/**/*.test.js --exit"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chai": "^4.3.7",
+    "express": "^4.18.2",
+    "mocha": "^10.2.0",
+    "tracer": "^1.1.6"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}
