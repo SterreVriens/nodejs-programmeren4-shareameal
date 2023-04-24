@@ -56,8 +56,11 @@ describe('UC-201 Registreren als nieuwe user', () => {
         data.should.have.property('email').that.is.a('string').and.equals(newUser.email);
         data.should.have.property('street').that.is.a('string').and.equals(newUser.street);
         data.should.have.property('city').that.is.a('string').and.equals(newUser.city);
+        data.should.have.property('isActive').that.is.a('boolean').and.equals(newUser.isActive);
         data.should.have.property('password').that.is.a('string');
         data.should.have.property('phoneNumber').that.is.a('string').and.equals(newUser.phoneNumber);
+        data.should.have.property('token').that.is.a('string').and.equals(newUser.token);
+
   
         done();
       });
@@ -135,6 +138,7 @@ describe('UC-203 Opvragen van gebruikersprofiel', () =>{
         data.should.have.property('email').that.is.a('string');
         data.should.have.property('street').that.is.a('string');
         data.should.have.property('city').that.is.a('string');
+        data.should.have.property('isActive').that.is.a('boolean');
         data.should.have.property('password').that.is.a('string');
         data.should.have.property('phoneNumber').that.is.a('string');
         data.should.have.property('token').that.is.a('string').equal(authHeader)
