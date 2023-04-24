@@ -32,15 +32,6 @@ app.get('/api/info', (req, res) => {
   });
 });
 
-
-
-
-  
-
-
-
-
-
 app.use('*', (req, res) => {
   res.status(404).json({
     'status': 404,
@@ -50,7 +41,7 @@ app.use('*', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port} - URL: http://localhost:3000/`)
+  logger.info(`Example app listening on port ${port} - URL: http://localhost:3000/`)
 })
 
 

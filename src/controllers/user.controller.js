@@ -1,6 +1,8 @@
 var logger = require('tracer').console();
 const { assert } = require('chai');
 const dummyUserData = require('../util/database')
+const Joi = require('joi');
+const userSchema = require('../util/validation');
 
 const userController = {
 
@@ -20,62 +22,61 @@ const userController = {
         });
       },
 
-    createUser : function(req, res) {
-        logger.info('201 - Register aangeroepen')
+      createUser: function(req, res) {
+        logger.info('201 - Register aangeroepen');
         let email = req.body.email;
         let exists = dummyUserData.some(user => user.email === email);
+        let index = dummyUserData.length+1;
         const user = req.body;
         let result = {};
-      
-        if(exists) {
-          logger.error('Gebruiker kan niet registreren')
+        
+        if (exists) {
+          logger.error('Gebruiker kan niet registreren');
           result.status = 400;
           result.message = 'User with specified email address already exists';
           result.data = {};
           res.status(400).json(result);
           return;
         }
-      
+        
         try {
-          assert(typeof user.firstName === 'string', 'firstName must be a string');
-          assert(typeof user.lastName === 'string', 'lastname must be a string')
-          assert(typeof email === 'string','emailAddress must be a string');
-          assert(typeof user.street === 'string', 'street must be a string');
-          assert(typeof user.city === 'string', 'city must be a string');
-          assert(typeof user.password === 'string', 'password must be a string');
-          assert(typeof user.phoneNumber === 'string', 'phonenumber must be a string');
-      
-      
           const newUser = {
+            'id': index,
             'firstName': req.body.firstName,
             'lastName': req.body.lastName,
             'street': req.body.street,
             'city': req.body.city,
             'email': email,
+            'isActive': true,
             'password': req.body.password,
             'phoneNumber': req.body.phoneNumber,
-            'token' : req.body.token
+            'token': req.body.token
           };
+          // Valideer de nieuwe gebruiker tegen het validatieschema
+          const { error, value } = userSchema.validate(newUser);
+          if (error) {
+            // Er zijn validatiefouten gevonden, geef een foutmelding terug
+            throw new Error(error.message);
+          }
+          // Voeg de gebruiker toe aan de array als deze voldoet aan de validatieregels
           dummyUserData.push(newUser);
-    
+      
           res.status(201).json({
             'status': 201,
             'message': 'User created',
             'data' : newUser
           });
         } catch (err) {
-          // Als één van de asserts failt sturen we een error response.
-          logger.error('user data is niet compleet/correct')
+          logger.error('user data is niet compleet/correct : ' + err.message.toString());
           res.status(400).json({
             status: 400,
             message: err.message.toString(),
             data: {}
           });
-          // Nodejs is asynchroon. We willen niet dat de applicatie verder gaat
-          // wanneer er al een response is teruggestuurd.
           return;
         }
       },
+      
     
     getProfile : function(req, res) {
         logger.info('203 - Opvragen van gebruiker profiel')
