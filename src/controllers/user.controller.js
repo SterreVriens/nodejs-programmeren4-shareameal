@@ -1,84 +1,130 @@
 var logger = require('tracer').console();
 const { assert } = require('chai');
-const dummyUserData = require('../util/database')
+const dummyUserData = require('../util/innem-db')
 const Joi = require('joi');
 const userSchema = require('../util/validation');
+const pool = require('../util/mysql-db')
+let index;
 
 const userController = {
 
-    getAllUsers : function(req, res){
-        let filteredData = dummyUserData;
-        logger.log('202 - Haal een lijst op met users');
-        if (req.query.field1 && req.query.value1) {
-          filteredData = filteredData.filter(user => user[req.query.field1] === req.query.value1);
-        }
-        if (req.query.field2 && req.query.value2) {
-          filteredData = filteredData.filter(user => user[req.query.field2] === req.query.value2);
-        }
-        res.status(200).json({
-          'status': 200,
-          'message': 'Get all users',
-          'data': filteredData
+    getAllUsers : function(req, res, next){
+      logger.info('Get all users')
+        pool.getConnection(function(err, conn) {
+          if(err){
+            logger.error('error ', err)
+            next(err.message)
+          }
+          if(conn){
+            conn.query(
+              'SELECT * FROM `user` ',
+              function(err, results, fields) {
+                if(err){
+                  res.status(500).json({
+                    statusCode : 500,
+                    message :err.sqlMessage
+                  })
+                    logger.error(err.sqlMessage)
+                  next( err.message)
+                }
+                res.status(200).json({
+                  'status': 200,
+                  'message': 'Get all users',
+                  'data': results
+                });
+              }
+            );
+            pool.releaseConnection(conn);
+          }
+          
         });
+
+
+        // logger.log('202 - Haal een lijst op met users');
+        // if (req.query.field1 && req.query.value1) {
+        //   filteredData = filteredData.filter(user => user[req.query.field1] === req.query.value1);
+        // }
+        // if (req.query.field2 && req.query.value2) {
+        //   filteredData = filteredData.filter(user => user[req.query.field2] === req.query.value2);
+        // }
+        
       },
 
-      createUser: function(req, res) {
+      createUser: function(req, res, next) {
         logger.info('201 - Register aangeroepen');
-        let email = req.body.email;
-        let exists = dummyUserData.some(user => user.email === email);
-        let index = dummyUserData.length+1;
         const user = req.body;
-        let result = {};
-        
-        if (exists) {
-          logger.error('Gebruiker kan niet registreren');
-          result.status = 400;
-          result.message = 'User with specified email address already exists';
-          result.data = {};
-          res.status(400).json(result);
-          return;
-        }
-        
-        try {
-          const newUser = {
-            'id': index,
-            'firstName': req.body.firstName,
-            'lastName': req.body.lastName,
-            'street': req.body.street,
-            'city': req.body.city,
-            'email': email,
-            'isActive': true,
-            'password': req.body.password,
-            'phoneNumber': req.body.phoneNumber,
-            'token': req.body.token
-          };
-          // Valideer de nieuwe gebruiker tegen het validatieschema
-          const { error, value } = userSchema.validate(newUser);
-          if (error) {
-            // Er zijn validatiefouten gevonden, geef een foutmelding terug
-            throw new Error(error.message);
+        let userIndex;
+      
+        // Check if the user already exists
+        pool.getConnection(function(err, conn) {
+          if(err){
+            logger.error('error ', err)
+            next(err.message)
           }
-          // Voeg de gebruiker toe aan de array als deze voldoet aan de validatieregels
-          dummyUserData.push(newUser);
+          if(conn){
+            pool.query('SELECT * FROM `user` WHERE `emailAdress` = ?', [user.emailAdress], function(err, results, fields) {
+              if (err) {
+                logger.error('Database error: ' + err.message);
+                return next(err.message);
+              }
       
-          res.status(201).json({
-            'status': 201,
-            'message': 'User created',
-            'data' : newUser
-          });
-        } catch (err) {
-          logger.error('user data is niet compleet/correct : ' + err.message.toString());
-          res.status(400).json({
-            status: 400,
-            message: err.message.toString(),
-            data: {}
-          });
-          return;
-        }
-      },
+              if (results.length > 0) {
+                logger.error('Gebruiker kan niet registreren: e-mailadres al in gebruik');
+                return res.status(400).json({
+                  status: 400,
+                  message: 'User with specified email address already exists',
+                  data: {}
+                });
+              }
+
+                // Continue with user registration if email address is available
+                try {
+                  const newUser = {
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    emailAdress: user.emailAdress,
+                    password: user.password,
+                    phoneNumber: user.phoneNumber,
+                    street: user.street,
+                    city: user.city
+                  };
+                // Validate user data against the validation schema
+                const { error, value } = userSchema.validate(newUser);
+                if (error) {
+                  throw new Error(error.message);
+                }
       
-    
-    getProfile : function(req, res) {
+                // Insert the new user into the database
+                pool.query('INSERT INTO `user`(`firstName`, `lastName`, `emailAdress`, `password`, `phoneNumber`, `street`, `city`) VALUES (?,?,?,?,?,?,?)', 
+                [newUser.firstName, newUser.lastName, newUser.emailAdress, newUser.password, newUser.phoneNumber, newUser.street, newUser.city],
+                function(err, results, fields) {
+                  if (err) {
+                    logger.error('Database error: ' + err.message);
+                    return next(err.message);
+                  }
+      
+                  // Return the new user data
+                  res.status(201).json({
+                    status: 201,
+                    message: 'User created',
+                    data: newUser
+                  });
+                });
+              } catch (err) {
+                logger.error('User data is niet compleet/correct: ' + err.message.toString());
+                res.status(400).json({
+                  status: 400,
+                  message: err.message.toString(),
+                  data: {}
+                });
+                return;
+              }
+
+            });
+          }
+        });
+      }, 
+      getProfile : function(req, res,next) {
         logger.info('203 - Opvragen van gebruiker profiel')
         const authHeader = req.headers['Authorization'] || req.headers['authorization'];
       
@@ -106,85 +152,156 @@ const userController = {
         });
       },
 
-    getUserById : function(req, res) {
+      getUserById: function(req, res, next) {
         logger.info('Gebruiker opzoeken door id');
-      
+        
         const id = parseInt(req.params.userId);
-        const user = dummyUserData.find(user => user.id === id);
+        
+        pool.getConnection(function(err, conn) {
+          if(err){
+            logger.error('error ', err)
+            next(err.message)
+          }
+          if(conn){
+            pool.query('SELECT * FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {
+              if (err) {
+                logger.error('Database error: ' + err.message);
+                return next(err.message);
+              }
       
-        if (!user) {
-          logger.error(`Gebruiker met id ${id} wordt niet gevonden`)
-          return res.status(404).json({
-            'status': 404,
-            'message': 'User not found'
-          });
-        } else {
-          return res.status(200).json({
-            'status': 200,
-            'message': `Get user with id ${id}`,
-            'data': user
-          });
-        }
+              if (results.length === 0) {
+                logger.error(`Gebruiker met id ${id} wordt niet gevonden`)
+                return res.status(404).json({
+                  'status': 404,
+                  'message': 'User not found'
+                });
+              } else {
+                const user = results[0];
+                return res.status(200).json({
+                  'status': 200,
+                  'message': `Get user with id ${id}`,
+                  'data': user
+                });
+              }
+            });
+          }
+        });
       },
       
-    updateUser : function(req, res){
+      updateUser: function(req, res, next) {
         logger.info('205 - Wijzigen van een user')
       
-        const id = parseInt(req.params.userid);
-        const user = dummyUserData.find(user => user.id === id);
+        const id = (req.params.userId);
+        const user = {
+          firstName: req.body['firstName'],
+          lastName: req.body['lastName'],
+          street: req.body['street'],
+          city: req.body['city'],
+          emailAdress: req.body['emailAdress'],
+          password: req.body['password'],
+          phoneNumber: req.body['phoneNumber'],
+        };
       
-        if (!user) {
-          res.status(404).json({ message: `User with id ${id} not found` });
-          logger.error('Gebruiker is niet gevonden');
+        // Validate user data against the validation schema
+        const { error, value } = userSchema.validate(user);
+        if (error) {
+          logger.error('User data is niet compleet/correct: ' + error.message.toString());
+          res.status(400).json({
+            status: 400,
+            message: error.message.toString(),
+            data: {}
+          });
           return;
         }
       
-        const userFirst = req.body['firstname'];
-        const userLast = req.body['lastname'];
-        const userStreet = req.body['street'];
-        const userCity = req.body['city'];
-        const userEmail = req.body['email'];
-        const userPassword = req.body['password'];
-        const userPhonenumer = req.body['phoneNumber'];
-        const userToken = req.body['token'];
+        // Check if the user exists
+        pool.query('SELECT * FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {
+          if (err) {
+            logger.error('Database error: ' + err.message);
+            return next(err.message);
+          }
       
-        user.firstName = userFirst || user.firstName;
-        user.lastName = userLast || user.lastName;
-        user.street = userStreet || user.street;
-        user.city = userCity || user.city;
-        user.email = userEmail || user.email;
-        user.password = userPassword || user.password;
-        user.phoneNumber = userPhonenumer || user.phoneNumber;
-        user.token = userToken || user.token;
+          if (results.length === 0) {
+            logger.error(`Gebruiker met id ${id} niet gevonden`);
+            res.status(404).json({
+              status: 404,
+              message: `User with id ${id} not found`,
+              data: {}
+            });
+            return;
+          }
       
-        return res.status(200).json({
-          'status': 200,
-          'message': `User is updated`,
-          'data': user
-      });
-      },
-
-    deleteUser : function(req, res){
-        logger.info('206 - Verwijderen van een user')
-        const userId = parseInt(req.params.userid);
-        //findIdex geeft het eerste item terug met een overeenkomst
-        const userIndex = dummyUserData.findIndex(user => user.id === userId);
+          // Update the user data in the database
+          pool.query('UPDATE `user` SET `firstName` = ?, `lastName` = ?, `emailAdress` = ?, `password` = ?, `phoneNumber` = ?, `street` = ?, `city` = ? WHERE `id` = ?', 
+          [user.firstName, user.lastName, user.emailAdress, user.password, user.phoneNumber, user.street, user.city, id],
+          function(err, results, fields) {
+            if (err) {
+              logger.error('Database error: ' + err.message);
+              return next(err.message);
+            }
+      
+            // Return the updated user data
+            pool.query('SELECT * FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {
+              if (err) {
+                logger.error('Database error: ' + err.message);
+                return next(err.message);
+              }
         
-        if (userIndex !== -1) {
-          dummyUserData.splice(userIndex, 1);
-          console.log(req.params.userid + userIndex)
-          return res.status(202).json({
-            'status': 202,
-            'message': `User is deleted`,
-            'data': dummyUserData})
-        } else {
-          logger.error(`Gebruiker met id ${userId} wordt niet gevonden`);
-          return res.status(404).json({
-            'status': 404,
-            'message': 'User cannot be deleted'
+              res.status(200).json({
+                status: 200,
+                message: `User with id ${id} updated`,
+                data: results[0]
+              });
+            });
           });
-        }
-      }
+        });
+      }    
+      ,
+      deleteUser: function(req, res) {
+        logger.info('206 - Verwijderen van een user')
+
+        const id = parseInt(req.params.userId);
+        
+    
+        pool.getConnection(function(err, conn) {
+            if (err) {
+                logger.error('error ', err)
+                next(err.message)
+            }
+            if (conn) {
+              pool.query('SELECT * FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {
+                if (err) {
+                  logger.error('Database error: ' + err.message);
+                  return next(err.message);
+                }
+        
+                if (results.length === 0) {
+                  logger.error(`Gebruiker met id ${id} wordt niet gevonden`)
+                  return res.status(404).json({
+                    'status': 404,
+                    'message': 'User not found'
+                  });
+                } else {
+                  pool.query('DELETE FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {
+                    if (err) {
+                      logger.error('Database error: ' + err.message);
+                      return next(err.message);
+                    } else {
+                      return res.status(200).json({
+                        'status': 200,
+                        'message': `Get user with id ${id} is deleted`,
+                      });
+                    }
+                  });
+                }
+              });
+              pool.releaseConnection(conn);
+            }
+        });
+    }
+    
 }
 
+
 module.exports = userController;
+

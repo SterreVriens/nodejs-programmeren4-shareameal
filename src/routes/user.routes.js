@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 var logger = require('tracer').console();
 const { assert } = require('chai');
-const dummyUserData = require('../util/database')
+const dummyUserData = require('../util/innem-db')
 
 const userController = require('../controllers/user.controller')
 
@@ -20,10 +20,10 @@ router.get('/profile', userController.getProfile);
 router.get('/:userId', userController.getUserById);
   
 //UC-205 Wijzigen van usergegevens
-router.put('/:userid', userController.updateUser)
+router.put('/:userId', userController.updateUser)
   
   //UC-206 Verwijderen van user
-  router.delete('/:userid', userController.deleteUser );
+  router.delete('/:userId', userController.deleteUser );
 
 
 module.exports = router;

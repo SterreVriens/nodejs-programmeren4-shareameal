@@ -33,12 +33,22 @@ app.get('/api/info', (req, res) => {
 });
 
 app.use('*', (req, res) => {
+  logger.warn('Invalid endpoint: '+ req.path)
   res.status(404).json({
     'status': 404,
     'message': 'Endpoint not found',
     'data': {}
   });
 });
+
+app.use((err,req,res,next) =>{
+  logger.error('Something broke!', err.message)
+  res.status(500).json({
+    'status' : 500,
+    'message' :err.message,
+    'data': {}
+  })
+})
 
 app.listen(port, () => {
   logger.info(`Example app listening on port ${port} - URL: http://localhost:3000/`)
