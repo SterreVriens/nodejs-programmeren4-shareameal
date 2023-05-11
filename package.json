@@ -4,7 +4,8 @@
   "description": "An api to save meals",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon app.js",
+    "dev": "nodemon app.js",
+    "start": "app.js",
     "test": "mocha -reporter spec test/**/*.test.js --exit"
   },
   "author": "",
