@@ -1,5 +1,5 @@
 const mysql = require('mysql2');
-const logger = require('../util/utils').logger;
+const logger = require('../util/util').logger;
 
 
 // Create the connection pool. The pool-specific settings are the defaults
