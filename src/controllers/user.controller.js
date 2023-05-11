@@ -65,11 +65,11 @@ const userController = {
                 logger.error('Database error: ' + err.message);
                 return next(err.message);
               }
-      
+              console.log(results)
               if (results.length > 0) {
                 logger.error('Gebruiker kan niet registreren: e-mailadres al in gebruik');
                 return res.status(400).json({
-                  status: 400,
+                  status: 403,
                   message: 'User with specified email address already exists',
                   data: {}
                 });
@@ -264,7 +264,10 @@ const userController = {
         pool.getConnection(function(err, conn) {
             if (err) {
                 logger.error('error ', err)
-                next(err.message)
+                return res.status(404).json({
+                  'status': 404,
+                  'message': 'Connection could not be made -' ,err
+                });
             }
             if (conn) {
               pool.query('SELECT * FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {
@@ -283,11 +286,14 @@ const userController = {
                   pool.query('DELETE FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {
                     if (err) {
                       logger.error('Database error: ' + err.message);
-                      return next(err.message);
+                      return res.status(200).json({
+                        'status': 404,
+                        'message': `Database error `
+                      });
                     } else {
                       return res.status(200).json({
                         'status': 200,
-                        'message': `Get user with id ${id} is deleted`,
+                        'message': `User met ID ${id} is verwijderd`,
                       });
                     }
                   });

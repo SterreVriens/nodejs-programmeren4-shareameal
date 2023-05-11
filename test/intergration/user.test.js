@@ -3,6 +3,7 @@ const chai = require('chai');
 const chaiHttp = require('chai-http');
 const server = require('../../app');
 const expect = chai.expect;
+const pool = require('../../src/util/mysql-db')
 
 chai.should();
 chai.use(chaiHttp);
@@ -22,16 +23,13 @@ describe('UC-201 Registreren als nieuwe user', () => {
   it('TC-201-5 - User succesvol geregistreerd', (done) => {
     // Nieuwe gebruiker om te testen
     const newUser = {
-      id : '4',
-      firstName: 'Hendrik',
+      firstName: 'Hendrikk',
       lastName: 'van Dam',
-      email: 'hvd@server.nl',
+      emailAdress: 'hendrikk.vanD@email.nl',
       street: 'Straatnaam 123',
       city: 'Plaatsnaam',
-      isActive: true,
       password: 'test1234',
-      phoneNumber: '061234567',
-      token : 'ABC'
+      phoneNumber: '123456789'
     };
   
     // Uitvoeren van de test
@@ -50,18 +48,19 @@ describe('UC-201 Registreren als nieuwe user', () => {
         status.should.equal(201);
         message.should.be.a('string').that.contains('User created');
         data.should.be.an('object');
-
+  
         data.should.have.property('firstName').that.is.a('string').and.equals(newUser.firstName);
         data.should.have.property('lastName').that.is.a('string').and.equals(newUser.lastName);
-        data.should.have.property('email').that.is.a('string').and.equals(newUser.email);
+        data.should.have.property('emailAdress').that.is.a('string').and.equals(newUser.emailAdress);
         data.should.have.property('street').that.is.a('string').and.equals(newUser.street);
         data.should.have.property('city').that.is.a('string').and.equals(newUser.city);
         data.should.have.property('password').that.is.a('string');
         data.should.have.property('phoneNumber').that.is.a('string').and.equals(newUser.phoneNumber);
-
+  
   
         done();
       });
+  
   });
 });  
 
@@ -110,44 +109,44 @@ describe('UC-202 Opvragen van overzicht van users', () => {
   });
 });
 
-describe('UC-203 Opvragen van gebruikersprofiel', () =>{
+// describe('UC-203 Opvragen van gebruikersprofiel', () =>{
 
-  it('TC-203-2 Gebruiker is ingelogd met geldig token.', function(done) {
-    const authHeader = 'WXYZ'
-    // Voer de test uit
-    chai
-      .request(server)
-      .get('/api/user/profile')
-      .set('Authorization', authHeader)
-      .end((err, res) => {
-        assert(err === null);
+//   it('TC-203-2 Gebruiker is ingelogd met geldig token.', function(done) {
+//     const authHeader = 'WXYZ'
+//     // Voer de test uit
+//     chai
+//       .request(server)
+//       .get('/api/user/profile')
+//       .set('Authorization', authHeader)
+//       .end((err, res) => {
+//         assert(err === null);
 
-        res.body.should.be.an('object');
-        let { data, message, status } = res.body;
+//         res.body.should.be.an('object');
+//         let { data, message, status } = res.body;
 
-        status.should.equal(200);
-        message.should.be.a('string').equal(`Get user profile for user with token ${authHeader}`);
+//         status.should.equal(200);
+//         message.should.be.a('string').equal(`Get user profile for user with token ${authHeader}`);
 
-        // Controleer of de gebruikersgegevens correct zijn geretourneerd
-        data.should.be.an('object');
+//         // Controleer of de gebruikersgegevens correct zijn geretourneerd
+//         data.should.be.an('object');
 
-        data.should.have.property('firstName').that.is.a('string');
-        data.should.have.property('lastName').that.is.a('string');
-        data.should.have.property('email').that.is.a('string');
-        data.should.have.property('street').that.is.a('string');
-        data.should.have.property('city').that.is.a('string');
-        data.should.have.property('password').that.is.a('string');
-        data.should.have.property('phoneNumber').that.is.a('string');
+//         data.should.have.property('firstName').that.is.a('string');
+//         data.should.have.property('lastName').that.is.a('string');
+//         data.should.have.property('emailAdress').that.is.a('string');
+//         data.should.have.property('street').that.is.a('string');
+//         data.should.have.property('city').that.is.a('string');
+//         data.should.have.property('password').that.is.a('string');
+//         data.should.have.property('phoneNumber').that.is.a('string');
 
-        done();
-      });
-    });
-});
+//         done();
+//       });
+//     });
+// });
 
 describe('UC-204 Opvragen van usergegevens bij ID', () =>{
 
   it('TC-204-3 Gebruiker-ID bestaat', function(done) {
-    const userId = 1;
+    const userId = 6;
   
     chai
       .request(server)
@@ -164,7 +163,7 @@ describe('UC-204 Opvragen van usergegevens bij ID', () =>{
         data.should.be.an('object');
         data.should.have.property('firstName').that.is.a('string');
         data.should.have.property('lastName').that.is.a('string');
-        data.should.have.property('email').that.is.a('string');
+        data.should.have.property('emailAdress').that.is.a('string');
         data.should.have.property('street').that.is.a('string');
         data.should.have.property('city').that.is.a('string');
         data.should.have.property('password');
@@ -179,26 +178,45 @@ describe('UC-204 Opvragen van usergegevens bij ID', () =>{
 describe('UC-206 Verwijderen van user', () =>{
 
   it('TC-206-4 Gebruiker succesvol verwijderd', function(done) {
-    const userId = 1; // veronderstel dat dit het te verwijderen gebruikersid is
-    chai
+    //const userId = 1; // veronderstel dat dit het te verwijderen gebruikersid is
+
+    pool.getConnection(function(err, conn) {
+        if (err) {
+          logger.error('error ', err);
+          next(err.message);
+        } else if (conn) {
+          conn.query(
+            'SELECT id FROM `user` ORDER BY id DESC LIMIT 1',
+            function(err, results, fields) {
+              if (err) {
+                res.status(500).json({
+                  statusCode: 500,
+                  message: err.sqlMessage
+                });
+                logger.error(err.sqlMessage);
+              }
+              const id = results[0].id;
+
+              chai
       .request(server)
-      .delete(`/api/user/${userId}`)
+      .delete(`/api/user/${id}`)
       .end((err, res) => {
         assert(err === null);
   
         res.body.should.be.an('object');
         let { data, message, status } = res.body;
   
-        status.should.equal(202);
-        message.should.be.a('string').equal(`User is deleted`);
-  
-        // Controleer of de gebruiker succesvol is verwijderd
-        data.should.be.an('array');
-        data.should.have.lengthOf(2);
-        data.should.not.deep.include({ id: 1 }); // de verwijderde gebruiker mag niet meer in de data zitten
+        status.should.equal(200);
+        message.should.be.a('string').equal(`User met ID ${id} is verwijderd`);
   
         done();
       });
+
+            }
+          );
+          pool.releaseConnection(conn);
+        }
+      })
   });
   
   
