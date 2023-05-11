@@ -68,7 +68,7 @@ const userController = {
               console.log(results)
               if (results.length > 0) {
                 logger.error('Gebruiker kan niet registreren: e-mailadres al in gebruik');
-                return res.status(400).json({
+                return res.status(403).json({
                   status: 403,
                   message: 'User with specified email address already exists',
                   data: {}
@@ -171,7 +171,7 @@ const userController = {
                 logger.error(`Gebruiker met id ${id} wordt niet gevonden`)
                 return res.status(404).json({
                   'status': 404,
-                  'message': 'User not found'
+                  'message': `Gebruiker met id ${id} wordt niet gevonden`
                 });
               } else {
                 const user = results[0];
@@ -206,7 +206,7 @@ const userController = {
           logger.error('User data is niet compleet/correct: ' + error.message.toString());
           res.status(400).json({
             status: 400,
-            message: error.message.toString(),
+            message: 'User data is niet compleet/correct: ' + error.message.toString(),
             data: {}
           });
           return;
@@ -280,7 +280,8 @@ const userController = {
                   logger.error(`Gebruiker met id ${id} wordt niet gevonden`)
                   return res.status(404).json({
                     'status': 404,
-                    'message': 'User not found'
+                    'message': 'User not found',
+                    'data': {}
                   });
                 } else {
                   pool.query('DELETE FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {

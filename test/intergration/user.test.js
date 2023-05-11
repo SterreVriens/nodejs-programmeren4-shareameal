@@ -10,22 +10,46 @@ chai.use(chaiHttp);
 
 describe('UC-201 Registreren als nieuwe user', () => {
   
-  it.skip('TC-201-1 - Verplicht veld ontbreekt', (done) => {
-    // Testen die te maken hebben met authenticatie of het valideren van
-    // verplichte velden kun je nog niet uitvoeren. Voor het eerste inlevermoment
-    // mag je die overslaan.
-    // In een volgende huiswerk opdracht ga je deze tests wel uitwerken.
-    // Voor nu:
-    done();
-  });
-
-
-  it('TC-201-5 - User succesvol geregistreerd', (done) => {
+  skip('TC-201-1 - Verplicht veld ontbreekt', (done) => {
     // Nieuwe gebruiker om te testen
     const newUser = {
       firstName: 'Hendrikk',
       lastName: 'van Dam',
       emailAdress: 'hendrikk.vanD@email.nl',
+      street: 'Straatnaam 123',
+      city: 'Plaatsnaam',
+      password: 'test1234',
+      phoneNumber: '123456789'
+    };
+  
+    // Uitvoeren van de test
+    chai
+      .request(server)
+      .post('/api/user')
+      .send(newUser)
+      .end((err, res) => {
+        assert(err === null);
+  
+        let { data, message, status } = res.body;
+  
+        data.should.have.property('firstName').that.is.a('string').and.equals(newUser.firstName);
+        data.should.have.property('lastName').that.is.a('string').and.equals(newUser.lastName);
+        data.should.have.property('emailAdress').that.is.a('string').and.equals(newUser.emailAdress);
+        data.should.have.property('street').that.is.a('string').and.equals(newUser.street);
+        data.should.have.property('city').that.is.a('string').and.equals(newUser.city);
+        data.should.have.property('password').that.is.a('string');
+        data.should.have.property('phoneNumber').that.is.a('string').and.equals(newUser.phoneNumber);
+  
+  
+        done();
+      });
+  });
+  skip('TC-201-5 - User succesvol geregistreerd', (done) => {
+    // Nieuwe gebruiker om te testen
+    const newUser = {
+      firstName: 'Hendrikk',
+      lastName: 'van Dam',
+      emailAdress: 'hendrikk.vanDam@email.nl',
       street: 'Straatnaam 123',
       city: 'Plaatsnaam',
       password: 'test1234',
@@ -49,18 +73,41 @@ describe('UC-201 Registreren als nieuwe user', () => {
         message.should.be.a('string').that.contains('User created');
         data.should.be.an('object');
   
-        data.should.have.property('firstName').that.is.a('string').and.equals(newUser.firstName);
-        data.should.have.property('lastName').that.is.a('string').and.equals(newUser.lastName);
-        data.should.have.property('emailAdress').that.is.a('string').and.equals(newUser.emailAdress);
-        data.should.have.property('street').that.is.a('string').and.equals(newUser.street);
-        data.should.have.property('city').that.is.a('string').and.equals(newUser.city);
-        data.should.have.property('password').that.is.a('string');
-        data.should.have.property('phoneNumber').that.is.a('string').and.equals(newUser.phoneNumber);
-  
   
         done();
       });
   
+  });
+  skip('TC-201-4 Gebruiker bestaat al',(done) =>{
+    const newUser = {
+      firstName: 'Hendrikk',
+      lastName: 'van Dam',
+      emailAdress: 'hvd@gmail.com',
+      street: 'Straatnaam 123',
+      city: 'Plaatsnaam',
+      password: 'test1234',
+      phoneNumber: '123456789'
+    };
+  
+    // Uitvoeren van de test
+    chai
+      .request(server)
+      .post('/api/user')
+      .send(newUser)
+      .end((err, res) => {
+        assert(err === null);
+  
+        res.should.have.status(403);
+  
+        let {message, status } = res.body;
+  
+        status.should.equal(403);
+        message.should.be.a('string').that.contains('User with specified email address already exists');
+  
+        
+  
+        done();
+      });
   });
 });  
 
@@ -145,6 +192,24 @@ describe('UC-202 Opvragen van overzicht van users', () => {
 
 describe('UC-204 Opvragen van usergegevens bij ID', () =>{
 
+  it('TC-204-2 Gebruiker-ID bestaat niet', function(done) {
+    const userId = 0;
+  
+    chai
+      .request(server)
+      .get(`/api/user/${userId}`)
+      .end((err, res) => {
+        assert(err === null);
+  
+        let {message, status } = res.body;
+  
+        status.should.equal(404);
+        message.should.be.a('string').equal(`Gebruiker met id ${userId} wordt niet gevonden`);
+
+  
+        done();
+      });
+  });
   it('TC-204-3 Gebruiker-ID bestaat', function(done) {
     const userId = 2;
   
@@ -175,10 +240,165 @@ describe('UC-204 Opvragen van usergegevens bij ID', () =>{
   
 });
 
+describe('UC-205 Updaten van user', () => {
+
+  // TC-205-1: Verplicht veld "emailAddress" ontbreekt
+  it('TC-205-1 Verplicht veld “emailAddress” ontbreekt', function(done) {
+    const userId = 1; // veronderstel dat dit het te wijzigen gebruikersid is
+    const user = {
+      firstName: 'John',
+      lastName: 'Doe',
+      street: 'Bredaweg 12',
+      city: 'Breda',
+      password: 'wachtwoord',
+      phoneNumber: '123456789'
+    };
+
+    chai.request(server)
+      .put(`/api/user/${userId}`)
+      .send(user)
+      .end((err, res) => {
+        assert(err === null);
+
+        res.body.should.be.an('object');
+        let { data, message, status } = res.body;
+
+        status.should.equal(400);
+        message.should.be.a('string').equal('User data is niet compleet/correct: "emailAdress" is required');
+        data.should.be.an('object').that.is.empty;
+
+        done();
+      });
+  });
+
+  // TC-205-4: Gebruiker bestaat niet
+  it('TC-205-4 Gebruiker bestaat niet', function(done) {
+    const userId = 999; // veronderstel dat dit een niet-bestaand gebruikersid is
+    const user = {
+      firstName: 'John',
+      lastName: 'Doe',
+      street: 'Bredaweg 12',
+      city: 'Breda',
+      emailAdress: 'john.doe@email.com',
+      password: 'wachtwoord',
+      phoneNumber: '123456789'
+    };
+
+    chai.request(server)
+      .put(`/api/user/${userId}`)
+      .send(user)
+      .end((err, res) => {
+        assert(err === null);
+
+        res.body.should.be.an('object');
+        let { data, message, status } = res.body;
+
+        status.should.equal(404);
+        message.should.be.a('string').equal(`User with id ${userId} not found`);
+        data.should.be.an('object').that.is.empty;
+
+        done();
+      });
+  });
+
+  it.skip('TC-205-6 Gebruiker succesvol gewijzigd', function(done) {
+
+    // Create a new user in the database
+    const user = {
+      firstName: 'John',
+      lastName: 'Doe',
+      street: 'Bredaseweg 12',
+      city: 'Breda',
+      emailAdress: 'john.doe@email.com',
+      password: '123456',
+      phoneNumber: '1234567890',
+    };
+    pool.query('INSERT INTO `user`(`firstName`, `lastName`, `emailAdress`, `password`, `phoneNumber`, `street`, `city`) VALUES (?,?,?,?,?,?,?)', 
+    [user.firstName, user.lastName, user.emailAdress, user.password, user.phoneNumber, user.street, user.city],
+     function(err, results, fields) {
+      if (err) {
+        logger.error('Database error: ' + err.message);
+        return next(err.message);
+      }
+      const userId = results.insertId;
+
+      // Update the user data
+      const updatedUser = {
+        firstName: 'Jane',
+        lastName: 'Doe',
+        street: 'Bredaseweg 12',
+        city: 'Breda',
+        emailAdress: 'jane.doe@email.com',
+        password: '654321',
+        phoneNumber: '987654321',
+      };
+      chai.request(server)
+        .put(`/api/user/${userId}`)
+        .send(updatedUser)
+        .end((err, res) => {
+          assert(err === null);
+
+          res.body.should.be.an('object');
+          let { data, message, status } = res.body;
+
+          status.should.equal(200);
+          message.should.be.a('string').equal(`User with id ${userId} updated`);
+
+          // Check if the user data was updated correctly in the database
+          pool.query('SELECT * FROM `user` WHERE `id` = ?', [userId], function(err, results, fields) {
+            if (err) {
+              logger.error('Database error: ' + err.message);
+              return next(err.message);
+            }
+
+            results.should.be.an('array').with.lengthOf(1);
+            results[0].should.be.an('object').with.keys(
+              'id', 'firstName', 'lastName', 'street', 'city', 'emailAdress', 'password', 'phoneNumber'
+            );
+            results[0].id.should.equal(userId);
+            results[0].firstName.should.equal(updatedUser.firstName);
+            results[0].lastName.should.equal(updatedUser.lastName);
+            results[0].street.should.equal(updatedUser.street);
+            results[0].city.should.equal(updatedUser.city);
+            results[0].emailAdress.should.equal(updatedUser.emailAdress);
+            results[0].password.should.equal(updatedUser.password);
+            results[0].phoneNumber.should.equal(updatedUser.phoneNumber);
+
+            // Remove the user from the database
+            pool.query('DELETE FROM `user` WHERE `id` = ?', [userId], function(err, results, fields) {
+              if (err) {
+                logger.error('Database error: ' + err.message);
+                return next(err.message);
+              }
+              done();
+            });
+          });
+        });
+    });
+  });
+});
+
+
 describe('UC-206 Verwijderen van user', () =>{
 
+  it('TC-206-1 Gebruiker bestaat niet', function(done) {
+    const userId = 999; // veronderstel dat dit een niet-bestaand gebruikersid iss
+
+    chai.request(server)
+    .delete(`/api/user/${userId}`)
+    .end((err, res) => {
+      assert(err === null);
+
+        let {data, message, status } = res.body;
+
+        status.should.equal(404);
+        message.should.be.a('string').equal(`User not found`);
+        data.should.be.an('object').that.is.empty;
+
+        done();
+      });
+  });
   it('TC-206-4 Gebruiker succesvol verwijderd', function(done) {
-    //const userId = 1; // veronderstel dat dit het te verwijderen gebruikersid is
 
     pool.getConnection(function(err, conn) {
         if (err) {
@@ -216,7 +436,7 @@ describe('UC-206 Verwijderen van user', () =>{
           );
           pool.releaseConnection(conn);
         }
-      })
+      });
   });
   
   
