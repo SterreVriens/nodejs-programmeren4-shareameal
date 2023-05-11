@@ -82,7 +82,7 @@ describe('UC-201 Registreren als nieuwe user', () => {
     const newUser = {
       firstName: 'Hendrikk',
       lastName: 'van Dam',
-      emailAdress: 'hvd@gmail.com',
+      emailAdress: 'hendrikk.vanDam@email.com',
       street: 'Straatnaam 123',
       city: 'Plaatsnaam',
       password: 'test1234',
