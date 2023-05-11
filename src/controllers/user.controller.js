@@ -8,7 +8,8 @@ let index;
 
 const userController = {
 
-    getAllUsers : function(req, res, next){
+      //Filter nog werkend maken
+      getAllUsers : function(req, res, next){
       logger.info('Get all users')
         pool.getConnection(function(err, conn) {
           if(err){
@@ -38,15 +39,6 @@ const userController = {
           }
           
         });
-
-
-        // logger.log('202 - Haal een lijst op met users');
-        // if (req.query.field1 && req.query.value1) {
-        //   filteredData = filteredData.filter(user => user[req.query.field1] === req.query.value1);
-        // }
-        // if (req.query.field2 && req.query.value2) {
-        //   filteredData = filteredData.filter(user => user[req.query.field2] === req.query.value2);
-        // }
         
       },
 
