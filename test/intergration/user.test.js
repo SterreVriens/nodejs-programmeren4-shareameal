@@ -146,7 +146,7 @@ describe('UC-202 Opvragen van overzicht van users', () => {
 describe('UC-204 Opvragen van usergegevens bij ID', () =>{
 
   it('TC-204-3 Gebruiker-ID bestaat', function(done) {
-    const userId = 6;
+    const userId = 2;
   
     chai
       .request(server)
