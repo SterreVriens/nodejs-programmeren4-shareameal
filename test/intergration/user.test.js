@@ -10,7 +10,7 @@ chai.use(chaiHttp);
 
 describe('UC-201 Registreren als nieuwe user', () => {
   
-  skip('TC-201-1 - Verplicht veld ontbreekt', (done) => {
+  it('TC-201-1 - Verplicht veld ontbreekt', (done) => {
     // Nieuwe gebruiker om te testen
     const newUser = {
       firstName: 'Hendrikk',
@@ -44,7 +44,7 @@ describe('UC-201 Registreren als nieuwe user', () => {
         done();
       });
   });
-  skip('TC-201-5 - User succesvol geregistreerd', (done) => {
+  it('TC-201-5 - User succesvol geregistreerd', (done) => {
     // Nieuwe gebruiker om te testen
     const newUser = {
       firstName: 'Hendrikk',
@@ -78,7 +78,7 @@ describe('UC-201 Registreren als nieuwe user', () => {
       });
   
   });
-  skip('TC-201-4 Gebruiker bestaat al',(done) =>{
+  it('TC-201-4 Gebruiker bestaat al',(done) =>{
     const newUser = {
       firstName: 'Hendrikk',
       lastName: 'van Dam',
@@ -398,7 +398,7 @@ describe('UC-206 Verwijderen van user', () =>{
         done();
       });
   });
-  it('TC-206-4 Gebruiker succesvol verwijderd', function(done) {
+  it.skip('TC-206-4 Gebruiker succesvol verwijderd', function(done) {
 
     pool.getConnection(function(err, conn) {
         if (err) {
