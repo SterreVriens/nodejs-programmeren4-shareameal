@@ -17,18 +17,12 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-pool.on('connection', function (connection) {
-  logger.debug(
-    `Connected to db '${connection.config.database}' on ${connection.config.host}`
-  );
-});
+// pool.on('connection', function (connection) {
+//   logger.error();(
+//     `Connected to db '${connection.config.database}' on ${connection.config.host}`
+//   );
+// });
 
-pool.on('acquire', function (connection) {
-  logger.debug('Connection %d acquired', connection.threadId);
-});
 
-pool.on('release', function (connection) {
-  logger.debug('Connection %d released', connection.threadId);
-});
 
 module.exports = pool;

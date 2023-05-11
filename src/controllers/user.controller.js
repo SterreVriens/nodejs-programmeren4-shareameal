@@ -9,38 +9,44 @@ let index;
 const userController = {
 
       //Filter nog werkend maken
-      getAllUsers : function(req, res, next){
-      logger.info('Get all users')
-        pool.getConnection(function(err, conn) {
-          if(err){
-            logger.error('error ', err)
-            next(err.message)
-          }
-          if(conn){
-            conn.query(
-              'SELECT * FROM `user` ',
-              function(err, results, fields) {
-                if(err){
-                  res.status(500).json({
-                    statusCode : 500,
-                    message :err.sqlMessage
-                  })
-                    logger.error(err.sqlMessage)
-                  next( err.message)
+      getAllUsers: function(req, res, next) {
+        logger.info('Get all users');
+        const queryField = Object.entries(req.query);
+      
+        if (queryField.length == 2) {
+          // do something
+        } else if (queryField.length == 1) {
+          // do something else
+        } else if (queryField.length == 0) {
+          pool.getConnection(function(err, conn) {
+            if (err) {
+              logger.error('error ', err);
+              next(err.message);
+            } else if (conn) {
+              conn.query(
+                'SELECT * FROM `user` ',
+                function(err, results, fields) {
+                  if (err) {
+                    res.status(500).json({
+                      statusCode: 500,
+                      message: err.sqlMessage
+                    });
+                    logger.error(err.sqlMessage);
+                    next(err.message);
+                  }
+                  res.status(200).json({
+                    'status': 200,
+                    'message': 'Get all users',
+                    'data': results
+                  });
                 }
-                res.status(200).json({
-                  'status': 200,
-                  'message': 'Get all users',
-                  'data': results
-                });
-              }
-            );
-            pool.releaseConnection(conn);
-          }
-          
-        });
-        
-      },
+              );
+              pool.releaseConnection(conn);
+            }
+          });
+        }
+      }
+      ,
 
       createUser: function(req, res, next) {
         logger.info('201 - Register aangeroepen');
