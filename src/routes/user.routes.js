@@ -5,6 +5,7 @@ const { assert } = require('chai');
 const dummyUserData = require('../util/innem-db')
 
 const userController = require('../controllers/user.controller')
+const authController = require('../controllers/authentication.controller')
 
 //UC-201 Registreren als nieuwe user
 router.post('', userController.createUser);
@@ -13,7 +14,9 @@ router.post('', userController.createUser);
 router.get('', userController.getAllUsers);
   
 //UC-203 Opvragen van gebruikersprofiel
-router.get('/profile', userController.getProfile);
+router.get('/profile',
+  authController.validateToken,
+  userController.getProfile);
   
   
 //UC-204 Opvragen van usergegevens bij ID

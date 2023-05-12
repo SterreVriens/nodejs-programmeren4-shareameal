@@ -4,10 +4,12 @@ const port = process.env.PORT || 3000
 const bodyParser = require('body-parser');
 const { assert } = require('chai');
 const Userrouter = require('./src/routes/user.routes')
+const Authrouter = require('./src/routes/auth.routes')
 var logger = require('tracer').console();
 
 Userrouter.use(express.json());
 app.use(bodyParser.json());
+app.use('/api', Authrouter)
 app.use('/api/user', Userrouter)
 
 //Routes
@@ -41,14 +43,15 @@ app.use('*', (req, res) => {
   });
 });
 
-app.use((err,req,res,next) =>{
-  logger.error('Something broke!', err.message)
-  res.status(500).json({
-    'status' : 500,
-    'message' :err.message,
-    'data': {}
-  })
-})
+// Express error handler
+app.use((err, req, res, next) => {
+  logger.error(err.code, err.message);
+  res.status(err.code).json({
+    statusCode: err.code,
+    message: err.message,
+    data: {}
+  });
+});
 
 app.listen(port, () => {
   logger.info(`Example app listening on port ${port} - URL: http://localhost:3000/`)

@@ -123,30 +123,40 @@ const userController = {
         });
       }, 
       getProfile : function(req, res,next) {
-        logger.info('203 - Opvragen van gebruiker profiel')
-        const authHeader = req.headers['Authorization'] || req.headers['authorization'];
-      
-        if (!authHeader) {
-          return res.status(401).json({
-            'status': 401,
-            'message': 'Authorization header missing'
-          });
-        }
-      
-        const userData = dummyUserData.find(user => user.token === authHeader);
-      
-        if (!userData) {
-          logger.error(`Gebruiker met token ${authHeader} is niet gevonden`)
-          return res.status(404).json({
-            'status': 404,
-            'message': 'User not found'
-          });
-        }
-      
-        return res.status(200).json({
-          'status': 200,
-          'message': `Get user profile for user with token ${authHeader}`,
-          'data': userData
+        const id = req.userId;
+        logger.trace('Get user profile for user', id);
+
+        let sqlStatement = 'SELECT * FROM `user` WHERE id=?';
+
+        pool.getConnection(function (err, conn) {
+          // Do something with the connection
+          if (err) {
+            logger.error(err.code, err.syscall, err.address, err.port);
+            next({
+              code: 500,
+              message: err.code
+            });
+          }
+          if (conn) {
+            conn.query(sqlStatement, [id], (err, results, fields) => {
+              if (err) {
+                logger.error(err.message);
+                next({
+                  code: 409,
+                  message: err.message
+                });
+              }
+              if (results) {
+                logger.trace('Found', results.length, 'results');
+                res.status(200).json({
+                  code: 200,
+                  message: 'Get User profile',
+                  data: results[0]
+                });
+              }
+            });
+            pool.releaseConnection(conn);
+          }
         });
       },
 
