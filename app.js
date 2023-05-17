@@ -5,12 +5,14 @@ const bodyParser = require('body-parser');
 const { assert } = require('chai');
 const Userrouter = require('./src/routes/user.routes')
 const Authrouter = require('./src/routes/auth.routes')
+const Mealrouter = require('./src/routes/meal.routes')
 var logger = require('tracer').console();
 
 Userrouter.use(express.json());
 app.use(bodyParser.json());
 app.use('/api', Authrouter)
 app.use('/api/user', Userrouter)
+app.use('/api/meal', Mealrouter)
 
 //Routes
 

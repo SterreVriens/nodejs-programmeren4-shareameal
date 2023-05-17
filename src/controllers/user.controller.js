@@ -2,7 +2,7 @@ var logger = require('tracer').console();
 const { assert } = require('chai');
 const dummyUserData = require('../util/innem-db')
 const Joi = require('joi');
-const userSchema = require('../util/validation');
+const userSchema = require('../util/userValidation');
 const pool = require('../util/mysql-db')
 let index;
 
