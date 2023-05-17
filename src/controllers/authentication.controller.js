@@ -22,15 +22,6 @@ module.exports = {
         });
       }
       if (conn) {
-        /**
-         * ToDo:
-         * 1. SQL Select, zie of deze user id in de database bestaat.
-         *    - Niet gevonden, dan melding Not Authorized
-         * 2. Als user gevonden, check dan het password
-         *    - Geen match, dan melding Not Authorized
-         * 3. Maak de payload en stop de userId daar in
-         * 4. Genereer het token en stuur deze terug in de response
-         */
         conn.query(
             'SELECT * FROM `user` WHERE `emailAdress` = ?',
             [req.body.emailAdress],
@@ -117,7 +108,7 @@ module.exports = {
     logger.trace('validateToken called');
     // logger.trace(req.headers)
     // The headers should contain the authorization-field with value 'Bearer [token]'
-    // Token geef je mee als bearer dus die haal je er hier af
+
     const authHeader = req.headers.authorization;
     if (!authHeader) {
       next({
@@ -126,6 +117,7 @@ module.exports = {
         data: undefined
       });
     } else {
+        // Token geef je mee als bearer dus die haal je er hier af
         const token =authHeader.substring(7, authHeader.lenght)
         logger.trace('token', token)
 
