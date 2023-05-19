@@ -60,7 +60,9 @@ const userController = {
             next(err.message)
           }
           if(conn){
-            pool.query('SELECT * FROM `user` WHERE `emailAdress` = ?', [user.emailAdress], function(err, results, fields) {
+            pool.query('SELECT * FROM `user` WHERE `emailAdress` = ?', 
+            [user.emailAdress], 
+            function(err, results, fields) {
               if (err) {
                 logger.error('Database error: ' + err.message);
                 return next(err.message);
