@@ -21,23 +21,25 @@ const userController = {
           pool.getConnection(function(err, conn) {
             if (err) {
               logger.error('error ', err);
-              next(err.message);
+              next({
+                code: 500,
+                message: err.code
+              });
             } else if (conn) {
               conn.query(
                 'SELECT * FROM `user` ',
                 function(err, results, fields) {
                   if (err) {
-                    res.status(500).json({
-                      statusCode: 500,
+                    next({
+                      code: 500,
                       message: err.sqlMessage
                     });
                     logger.error(err.sqlMessage);
-                    next(err.message);
                   }
-                  res.status(200).json({
-                    'status': 200,
-                    'message': 'Get all users',
-                    'data': results
+                  next({
+                    code: 200,
+                    message: 'Get all users',
+                    data: results
                   });
                 }
               );
@@ -57,7 +59,10 @@ const userController = {
         pool.getConnection(function(err, conn) {
           if(err){
             logger.error('error ', err)
-            next(err.message)
+            next({
+              code: 500,
+              message: err.message
+            });
           }
           if(conn){
             pool.query('SELECT * FROM `user` WHERE `emailAdress` = ?', 
@@ -65,15 +70,17 @@ const userController = {
             function(err, results, fields) {
               if (err) {
                 logger.error('Database error: ' + err.message);
-                return next(err.message);
+                next({
+                  code: 500,
+                  message: err.message
+                });
               }
               console.log(results)
               if (results.length > 0) {
                 logger.error('Gebruiker kan niet registreren: e-mailadres al in gebruik');
-                return res.status(403).json({
-                  status: 403,
-                  message: 'User with specified email address already exists',
-                  data: {}
+                next({
+                  code: 403,
+                  message: 'User with specified email address already exists'
                 });
               }
 
@@ -91,8 +98,8 @@ const userController = {
                 // Validate user data against the validation schema
                 const { error, value } = userSchema.validate(newUser);
                 if (error) {
-                  res.status(400).json({
-                    status: 400,
+                  next({
+                    code: 400,
                     message: 'User data is not complete',
                     data: error.message
                   });
@@ -104,20 +111,23 @@ const userController = {
                 function(err, results, fields) {
                   if (err) {
                     logger.error('Database error: ' + err.message);
-                    return next(err.message);
+                    next({
+                      code: 500,
+                      message: err.message
+                    });
                   }
       
                   // Return the new user data
-                  res.status(201).json({
-                    status: 201,
+                  next({
+                    code: 201,
                     message: 'User created',
                     data: newUser
                   });
                 });
               } catch (err) {
                 logger.error('User data is niet compleet/correct: ' + err.message.toString());
-                res.status(400).json({
-                  status: 400,
+                next({
+                  code: 400,
                   message: err.message.toString(),
                   data: {}
                 });
@@ -154,7 +164,7 @@ const userController = {
               }
               if (results) {
                 logger.trace('Found', results.length, 'results');
-                res.status(200).json({
+                next({
                   code: 200,
                   message: 'Get User profile',
                   data: results[0]
@@ -174,27 +184,33 @@ const userController = {
         pool.getConnection(function(err, conn) {
           if(err){
             logger.error('error ', err)
-            next(err.message)
+            next({
+              code: 500,
+              message: err.message
+            });
           }
           if(conn){
             pool.query('SELECT * FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {
               if (err) {
                 logger.error('Database error: ' + err.message);
-                return next(err.message);
+                next({
+                  code: 500,
+                  message: err.message
+                });
               }
       
               if (results.length === 0) {
                 logger.error(`Gebruiker met id ${id} wordt niet gevonden`)
-                return res.status(404).json({
-                  'status': 404,
-                  'message': `Gebruiker met id ${id} wordt niet gevonden`
+                next({
+                  code: 404,
+                  message: `Gebruiker met id ${id} wordt niet gevonden`
                 });
               } else {
                 const user = results[0];
-                return res.status(200).json({
-                  'status': 200,
-                  'message': `Get user with id ${id}`,
-                  'data': user
+                next({
+                  code: 200,
+                  message:  `Get user with id ${id}`,
+                  data: user
                 });
               }
             });
@@ -220,11 +236,12 @@ const userController = {
         const { error, value } = userSchema.validate(user);
         if (error) {
           logger.error('User data is niet compleet/correct: ' + error.message.toString());
-          res.status(400).json({
-            status: 400,
+          next({
+            code: 400,
             message: 'User data is niet compleet/correct: ' + error.message.toString(),
             data: {}
           });
+          
           return;
         }
       
@@ -232,12 +249,15 @@ const userController = {
         pool.query('SELECT * FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {
           if (err) {
             logger.error('Database error: ' + err.message);
-            return next(err.message);
+            next({
+              code: 500,
+              message: err.message
+            });
           }
       
           if (results.length === 0) {
             logger.error(`Gebruiker met id ${id} niet gevonden`);
-            res.status(404).json({
+            next({
               status: 404,
               message: `User with id ${id} not found`,
               data: {}
@@ -251,17 +271,23 @@ const userController = {
           function(err, results, fields) {
             if (err) {
               logger.error('Database error: ' + err.message);
-              return next(err.message);
+              next({
+                status: 500,
+                message: err.message
+              });
             }
       
             // Return the updated user data
             pool.query('SELECT * FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {
               if (err) {
                 logger.error('Database error: ' + err.message);
-                return next(err.message);
+                next({
+                  status: 500,
+                  message: err.message
+                });
               }
-        
-              res.status(200).json({
+      
+              next({
                 status: 200,
                 message: `User with id ${id} updated`,
                 data: results[0]
