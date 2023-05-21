@@ -39,13 +39,10 @@ describe('UC-201 Registreren als nieuwe user', () => {
   });
   it('TC-201-4 Gebruiker bestaat al',(done) =>{
     const newUser = {
-      firstName: 'Hendrikk',
-      lastName: 'van Dam',
-      emailAdress: 'hendrikk.vanDam@email.com',
-      street: 'Straatnaam 123',
-      city: 'Plaatsnaam',
-      password: 'test1234',
-      phoneNumber: '123456789'
+      firstName: 'Mariëtte',
+      lastName: 'van den Dullemen',
+      emailAdress: 'm.vandullemen@server.nl',
+      password: 'secret',
     };
 
   
