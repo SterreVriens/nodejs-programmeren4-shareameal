@@ -51,8 +51,8 @@ app.use('*', (req, res) => {
 // Express error handler
 app.use((err, req, res, next) => {
   logger.error(err.code, err.message);
-  return res.status(err.code).json({
-    status: err.code,
+  return res.status(404).json({
+    status: 404,
     message: err.message,
     data: {}
   });

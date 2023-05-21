@@ -176,7 +176,6 @@ const userController = {
       createUser: function(req, res) {
         logger.info('201 - Register aangeroepen');
         const user = req.body;
-        let userIndex;
       
         // Check if the user already exists
         pool.getConnection(function(err, conn) {
@@ -189,7 +188,7 @@ const userController = {
             return; // Stop de functie hier om te voorkomen dat het antwoord tweemaal wordt verzonden
           }
           if (conn) {
-            pool.query('SELECT * FROM `user` WHERE `emailAdress` = ?', [user.emailAdress], function(err, results, fields) {
+            pool.query('SELECT * FROM `user` WHERE `emailAdress` = ?', [user.emailAdress], function(err, results) {
               if (err) {
                 logger.error('Database error: ' + err.message);
                 return res.status(500).json({
@@ -228,7 +227,6 @@ const userController = {
                     message: 'User data is not complete',
                     data: error.message
                   });
-                  return; // Stop de functie hier om te voorkomen dat het antwoord tweemaal wordt verzonden
                 }
       
                 // Insert the new user into the database
