@@ -7,6 +7,7 @@ const pool = require('../../src/util/mysql-db')
 const should = chai.should();
 
 chai.use(chaiHttp);
+//chai.use(should);
 
 describe('UC-201 Registreren als nieuwe user', () => {
   
@@ -86,12 +87,12 @@ describe('UC-201 Registreren als nieuwe user', () => {
       .end((err, res) => {
         assert(err === null);
   
-        res.should.have.status(201);
+        res.body.should.has.property('status').to.be.equal(201);
         res.body.should.be.an('object');
   
-        let { data, message, status } = res.body;
+        let { data, message } = res.body;
   
-        status.should.equal(201);
+       
         message.should.be.a('string').that.contains('User created');
         data.should.be.an('object');
   
@@ -131,19 +132,16 @@ describe('UC-202 Opvragen van overzicht van users', () => {
       .end((err, res) => {
         assert(err === null);
 
+        res.body.should.has.property('status').to.be.equal(200);
         res.body.should.be.an('object');
         let { data, message, status } = res.body;
-
-        status.should.equal(200);
         message.should.be.a('string').equal('Get all users');
 
         done();
       });
   });
 
-  // Je kunt een test ook tijdelijk skippen om je te focussen op andere testcases.
-  // Dan gebruik je it.skip
-  it.skip('TC-202-2 - Toon gebruikers met zoekterm op niet-bestaande velden', (done) => {
+  it('TC-202-2 - Toon gebruikers met zoekterm op niet-bestaande velden', (done) => {
     // Voer de test uit
     chai
       .request(server)
@@ -154,50 +152,134 @@ describe('UC-202 Opvragen van overzicht van users', () => {
         assert(err === null);
 
         res.body.should.be.an('object');
-        let { data, message, status } = res.body;
+        res.body.should.has.property('status').to.be.equal(200);
+        let { data, message } = res.body;
 
-        status.should.equal(200);
-        message.should.be.a('string').equal('User getAll endpoint');
+        message.should.be.a('string').equal('Invalid filter parameters');
         data.should.be.an('array');
 
         done();
       });
   });
+  it('TC-202-3 Toon gebruikers met gebruik van de zoekterm op het veld ‘isActive’=false'), (done) =>{
+    chai
+      .request(server)
+      .get('/api/user')
+      .query({ isActive: 'false'})
+      // Is gelijk aan .get('/api/user?name=foo&city=non-existent')
+      .end((err, res) => {
+        assert(err === null);
+
+        res.body.should.be.an('object');
+        let { data, message, status } = res.body;
+
+        status.should.equal(200);
+        message.should.be.a('string').equal('Get filtered users');
+        data.should.be.an('array');
+
+        done();
+      });
+  }
+  it('TC-202-4 Toon gebruikers met gebruik van de zoekterm op het veld ‘isActive’=true'), (done) =>{
+    chai
+      .request(server)
+      .get('/api/user')
+      .query({ isActive: 'true'})
+      // Is gelijk aan .get('/api/user?name=foo&city=non-existent')
+      .end((err, res) => {
+        assert(err === null);
+
+        res.body.should.be.an('object');
+        let { data, message, status } = res.body;
+
+        status.should.equal(200);
+        message.should.be.a('string').equal('Get filtered users');
+        data.should.be.an('array');
+
+        done();
+      });
+  }
+  it('TC-202-5 Toon gebruikers met zoektermen op bestaande velden (max op 2 velden filteren)'), (done) =>{
+    chai
+      .request(server)
+      .get('/api/user')
+      .query({ isActive: 'true', lastName:'Doe'})
+      // Is gelijk aan .get('/api/user?name=foo&city=non-existent')
+      .end((err, res) => {
+        assert(err === null);
+
+        res.body.should.be.an('object');
+        let { data, message, status } = res.body;
+
+        status.should.equal(200);
+        message.should.be.a('string').equal('Get filtered users');
+        data.should.be.an('array');
+
+        done();
+      });
+  }
 });
 
-// describe('UC-203 Opvragen van gebruikersprofiel', () =>{
+describe('UC-203 Opvragen van gebruikersprofiel', () =>{
 
-//   it('TC-203-2 Gebruiker is ingelogd met geldig token.', function(done) {
-//     const authHeader = 'WXYZ'
-//     // Voer de test uit
-//     chai
-//       .request(server)
-//       .get('/api/user/profile')
-//       .set('Authorization', authHeader)
-//       .end((err, res) => {
-//         assert(err === null);
+  let server; // Serverinstantie
+  let authToken; // Variabele om het token op te slaan
 
-//         res.body.should.be.an('object');
-//         let { data, message, status } = res.body;
+  before(function(done) {
+    // Start de server voordat de tests worden uitgevoerd
+    server = require('../../app');
+  
+    // Login en haal het token op
+    const user = {
+      emailAdress: 'm.vandullemen@server.nl',
+      password: 'secret'
+    };
+  
+    chai
+      .request(server)
+      .post('/api/login')
+      .send(user)
+      .end(function(err, res) {
+        assert(err === null);
+        assert(res.status === 200);
+  
+        // Haal het token op uit de response
+        authToken = res.body.data.token;
+        console.log(authToken);
+        done(); // Geef aan dat de before-haak is voltooid
+      });
+  });
 
-//         status.should.equal(200);
-//         message.should.be.a('string').equal(`Get user profile for user with token ${authHeader}`);
+  it('TC-203-2 Gebruiker is ingelogd met geldig token.', function(done) {
+    //log eerst in doormiddel van het /login endpoint met de user en haal daarna uit die resultaten de token op
+    chai
+      .request(server)
+      .get('/api/user/profile')
+      .set('Authorization', `Bearer ${authToken}`)
+      .end((err, res) => {
+        assert(err === null);
 
-//         // Controleer of de gebruikersgegevens correct zijn geretourneerd
-//         data.should.be.an('object');
+        res.body.should.be.an('object');
+        let { data, message, status } = res.body;
 
-//         data.should.have.property('firstName').that.is.a('string');
-//         data.should.have.property('lastName').that.is.a('string');
-//         data.should.have.property('emailAdress').that.is.a('string');
-//         data.should.have.property('street').that.is.a('string');
-//         data.should.have.property('city').that.is.a('string');
-//         data.should.have.property('password').that.is.a('string');
-//         data.should.have.property('phoneNumber').that.is.a('string');
+        res.body.status.should.to.be.equal(200);
+        res.body.message.should.be.a('string').equal(`Get user profile for user with token ${authHeader}`);
 
-//         done();
-//       });
-//     });
-// });
+        // Controleer of de gebruikersgegevens correct zijn geretourneerd
+        data.should.be.an('object');
+
+        data.should.have.property('firstName').that.is.a('string');
+        data.should.have.property('lastName').that.is.a('string');
+        data.should.have.property('emailAdress').that.is.a('string');
+        data.should.have.property('street').that.is.a('string');
+        data.should.have.property('city').that.is.a('string');
+        data.should.have.property('password').that.is.a('string');
+        data.should.have.property('phoneNumber').that.is.a('string');
+
+        done();
+      });
+    });
+});
 
 describe('UC-204 Opvragen van usergegevens bij ID', () =>{
 
@@ -220,7 +302,7 @@ describe('UC-204 Opvragen van usergegevens bij ID', () =>{
         done();
       });
   });
-  it.skip('TC-204-3 Gebruiker-ID bestaat', function(done) {
+  it('TC-204-3 Gebruiker-ID bestaat', function(done) {
     const userId = 2;
   
     chai
@@ -278,7 +360,7 @@ describe('UC-205 Updaten van user', () => {
   });
 
   // TC-205-4: Gebruiker bestaat niet
-  it.skip('TC-205-4 Gebruiker bestaat niet', function(done) {
+  it('TC-205-4 Gebruiker bestaat niet', function(done) {
     const userId = 999; // veronderstel dat dit een niet-bestaand gebruikersid is
     const user = {
       firstName: 'John',
@@ -307,37 +389,55 @@ describe('UC-205 Updaten van user', () => {
       });
   });
 
-  it.skip('TC-205-6 Gebruiker succesvol gewijzigd', function(done) {
+  it('TC-205-6 Gebruiker succesvol gewijzigd', function(done) {
 
     // Create a new user in the database
+    let userId;
     const user = {
       firstName: 'John',
       lastName: 'Doe',
       street: 'Bredaseweg 12',
       city: 'Breda',
       emailAdress: 'john.doe@email.com',
-      password: '123456',
-      phoneNumber: '1234567890',
+      password: 'Secret12',
+      phoneNumber: '06-12345678',
     };
-    pool.query('INSERT INTO `user`(`firstName`, `lastName`, `emailAdress`, `password`, `phoneNumber`, `street`, `city`) VALUES (?,?,?,?,?,?,?)', 
-    [user.firstName, user.lastName, user.emailAdress, user.password, user.phoneNumber, user.street, user.city],
-     function(err, results, fields) {
-      if (err) {
-        logger.error('Database error: ' + err.message);
-        return next(err.message);
+    pool.getConnection(function(err, conn) {
+      if(err){
+        logger.error('error ', err)
+        next({
+          code: 500,
+          message: err.message
+        });
       }
-      const userId = results.insertId;
+      if(conn){
+      conn.query('INSERT INTO `user`(`firstName`, `lastName`, `emailAdress`, `password`, `phoneNumber`, `street`, `city`) VALUES (?,?,?,?,?,?,?)', 
+        [user.firstName, user.lastName, user.emailAdress, user.password, user.phoneNumber, user.street, user.city],
+        function(err, results, fields) {
+          if (err) {
+            logger.error('Database error: ' + err.message);
+            next({
+              code: 500,
+              message: err.message
+            });
+          }
+           userId = results.insertId;
+        }
+      )}
+      
+    
 
       // Update the user data
       const updatedUser = {
         firstName: 'Jane',
-        lastName: 'Doe',
+        lastName: 'Doe John',
         street: 'Bredaseweg 12',
         city: 'Breda',
         emailAdress: 'jane.doe@email.com',
-        password: '654321',
-        phoneNumber: '987654321',
+        password: 'sEcre12t',
+        phoneNumber: '06 12345678',
       };
+
       chai.request(server)
         .put(`/api/user/${userId}`)
         .send(updatedUser)
@@ -404,7 +504,7 @@ describe('UC-206 Verwijderen van user', () =>{
         done();
       });
   });
-  it.skip('TC-206-4 Gebruiker succesvol verwijderd', function(done) {
+  it('TC-206-4 Gebruiker succesvol verwijderd', function(done) {
 
     pool.getConnection(function(err, conn) {
         if (err) {

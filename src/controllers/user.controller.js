@@ -159,7 +159,7 @@ const userController = {
                     });
                     logger.error(err.sqlMessage);
                   }
-                  next({
+                  res.status(200).json({
                     code: 200,
                     message: 'Get all users',
                     data: results
@@ -180,24 +180,25 @@ const userController = {
       
         // Check if the user already exists
         pool.getConnection(function(err, conn) {
-          if(err){
+          if (err) {
             logger.error('error ', err)
             next({
               code: 500,
               message: err.message
             });
+            return; // Stop de functie hier om te voorkomen dat het antwoord tweemaal wordt verzonden
           }
-          if(conn){
-            pool.query('SELECT * FROM `user` WHERE `emailAdress` = ?', 
-            [user.emailAdress], 
-            function(err, results, fields) {
+          if (conn) {
+            pool.query('SELECT * FROM `user` WHERE `emailAdress` = ?', [user.emailAdress], function(err, results, fields) {
               if (err) {
                 logger.error('Database error: ' + err.message);
                 next({
                   code: 500,
                   message: err.message
                 });
+                return; // Stop de functie hier om te voorkomen dat het antwoord tweemaal wordt verzonden
               }
+      
               console.log(results)
               if (results.length > 0) {
                 logger.error('Gebruiker kan niet registreren: e-mailadres al in gebruik');
@@ -205,19 +206,20 @@ const userController = {
                   code: 403,
                   message: 'User with specified email address already exists'
                 });
+                return; // Stop de functie hier om te voorkomen dat het antwoord tweemaal wordt verzonden
               }
-
-                // Continue with user registration if email address is available
-                try {
-                  const newUser = {
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    emailAdress: user.emailAdress,
-                    password: user.password,
-                    phoneNumber: user.phoneNumber,
-                    street: user.street,
-                    city: user.city
-                  };
+      
+              // Continue with user registration if email address is available
+              try {
+                const newUser = {
+                  firstName: user.firstName,
+                  lastName: user.lastName,
+                  emailAdress: user.emailAdress,
+                  password: user.password,
+                  phoneNumber: user.phoneNumber,
+                  street: user.street,
+                  city: user.city
+                };
                 // Validate user data against the validation schema
                 const { error, value } = userSchema.validate(newUser);
                 if (error) {
@@ -226,22 +228,22 @@ const userController = {
                     message: 'User data is not complete',
                     data: error.message
                   });
+                  return; // Stop de functie hier om te voorkomen dat het antwoord tweemaal wordt verzonden
                 }
       
                 // Insert the new user into the database
-                pool.query('INSERT INTO `user`(`firstName`, `lastName`, `emailAdress`, `password`, `phoneNumber`, `street`, `city`) VALUES (?,?,?,?,?,?,?)', 
-                [newUser.firstName, newUser.lastName, newUser.emailAdress, newUser.password, newUser.phoneNumber, newUser.street, newUser.city],
-                function(err, results, fields) {
+                pool.query('INSERT INTO `user`(`firstName`, `lastName`, `emailAdress`, `password`, `phoneNumber`, `street`, `city`) VALUES (?,?,?,?,?,?,?)', [newUser.firstName, newUser.lastName, newUser.emailAdress, newUser.password, newUser.phoneNumber, newUser.street, newUser.city], function(err, results, fields) {
                   if (err) {
                     logger.error('Database error: ' + err.message);
                     next({
                       code: 500,
                       message: err.message
                     });
+                    return; // Stop de functie hier om te voorkomen dat het antwoord tweemaal wordt verzonden
                   }
       
                   // Return the new user data
-                  next({
+                  res.status(201).json({
                     code: 201,
                     message: 'User created',
                     data: newUser
@@ -254,13 +256,12 @@ const userController = {
                   message: err.message.toString(),
                   data: {}
                 });
-                return;
               }
-
             });
           }
         });
-      }, 
+      }
+      , 
       getProfile : function(req, res,next) {
         const id = req.userId;
         logger.trace('Get user profile for user', id);
@@ -287,7 +288,7 @@ const userController = {
               }
               if (results) {
                 logger.trace('Found', results.length, 'results');
-                next({
+                res.status(200).json({
                   code: 200,
                   message: 'Get User profile',
                   data: results[0]
