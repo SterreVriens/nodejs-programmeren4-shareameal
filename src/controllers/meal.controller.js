@@ -23,25 +23,27 @@ const mealController = {
                 // Validate meal data against the validation schema
                 const { error, value } = mealSchema.validate(meal);
                 if (error) {
+                  logger.error(error.sqlMessage);
                     return res.status(400).json({
                         status: 400,
                         message: error.message,
                         data: {}
                     });
-                    logger.error(error.sqlMessage);
-                    return res.status(500)
+                    
+                    
                 }
                 pool.query('INSERT INTO `meal`(`isActive`, `isVega`, `isVegan`, `isToTakeHome`, `dateTime`, `maxAmountOfParticipants`, `price`, `imageUrl`, `cookId`, `name`, `description`, `allergenes`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
                 [meal.isActive, meal.isVega, meal.isVegan, meal.isToTakeHome, meal.dateTime, meal.maxAmountOfParticipants, meal.price, meal.imageUrl, id, meal.name, meal.description, meal.allergenes],
                 function(err, results, fields) {
                     if (err) {
+                      logger.error(err.sqlMessage);
                         return res.status(500).json({
-                            statusstatus: 500,
-                            message: 'Meal not complete: '+err.sqlMessage,
+                            status: 500,
+                            message: err.sqlMessage,
                             data:{}
                         });
-                        logger.error(err.sqlMessage);
-                        return res.status(500)
+                        
+                        
                     }
                     //Haalt het geïnjecteerde maaltijd-ID op uit de queryresultaten
                     //De results is het resultaat van de query die wordt uitgevoerd met pool.query. 
