@@ -3,6 +3,7 @@ const { assert } = require('chai');
 const dummyUserData = require('../util/innem-db')
 const Joi = require('joi');
 const userSchema = require('../util/userValidation');
+const userUpdateSchema = require('../util/userUpdateValidation');
 const pool = require('../util/mysql-db')
 let index;
 
@@ -379,7 +380,7 @@ const userController = {
         };
 
         // Validate user data against the validation schema
-        const { error, value } = userSchema.validate(user);
+        const { error, value } = userUpdateSchema.validate(user);
         if (error) {
           logger.error('User data is niet compleet/correct: ' + error.message.toString());
           return res.status(400).json({
@@ -418,7 +419,7 @@ const userController = {
                 }
                 else{
                   conn.query('UPDATE `user` SET `firstName` = ?, `lastName` = ?, `emailAdress` = ?, `password` = ?, `phoneNumber` = ?, `street` = ?, `city` = ? WHERE `id` = ?', 
-                  [user.firstName, user.lastName, user.emailAdress, user.password, user.phoneNumber, user.street, user.city, id],
+                  [user.firstName || results[0].firstName, user.lastName || results[0].lastName, user.emailAdress || results[0].emailAdress, user.password || results[0].password, user.phoneNumber || results[0].phoneNumber, user.street || results[0].street, user.city || results[0].city, id],
                   function(err, results, fields) {
                     if (err) {
                       logger.error('Database error: ' + err.message);
