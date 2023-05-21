@@ -37,7 +37,8 @@ const mealController = {
                     if (err) {
                         return res.status(500).json({
                             statusstatus: 500,
-                            message: 'Meal not complete: '+err.sqlMessage
+                            message: 'Meal not complete: '+err.sqlMessage,
+                            data:{}
                         });
                         logger.error(err.sqlMessage);
                         return res.status(500)
@@ -49,9 +50,9 @@ const mealController = {
                     const insertedMealId = results.insertId;
                     const completeMeal = {mealId:insertedMealId,meal}
                     return res.status(201).json({
-                        'status': 201,
-                        'message': 'Create meals',
-                        'data': completeMeal
+                        status: 201,
+                        message: 'Create meals',
+                        data:  {id:results.insertId, ...completeMeal}
                     });
                     }
                 );
@@ -74,15 +75,16 @@ const mealController = {
                     if (err) {
                         return res.status(500).json({
                             status: 500,
-                            message: err.sqlMessage
+                            message: err.sqlMessage,
+                            data: {}
                         });
                         logger.error(err.sqlMessage);
                         return res.status(500)
                     }
                     return res.status(200).json({
-                        'status': 200,
-                        'message': 'Get all meals',
-                        'data': results
+                        status: 200,
+                        message: 'Get all meals',
+                        data: results
                     });
                     }
                 );
@@ -113,15 +115,16 @@ const mealController = {
               if (results.length === 0) {
                 logger.error(`Maaltijd met id ${id} wordt niet gevonden`)
                 return  res.status(404).json({
-                  'status': 404,
-                  'message': `Maaltijd met id ${id} wordt niet gevonden`
+                  status: 404,
+                  message: `Maaltijd met id ${id} wordt niet gevonden`,
+                  data: {}
                 });
               } else {
                 const meal = results[0];
                 return  res.status(200).json({
-                  'status': 200,
-                  'message': `Get meal with id ${id}`,
-                  'data': meal
+                  status: 200,
+                  message: `Get meal with id ${id}`,
+                  data: meal
                 });
               }
             });

@@ -8,7 +8,6 @@ let index;
 
 const userController = {
 
-      //Filter nog werkend maken
       getAllUsers: function(req, res) {
         logger.info('Get all users');
         const queryField = Object.entries(req.query);
@@ -26,7 +25,8 @@ const userController = {
                 logger.error('error ', err);
                 return res.status(500).json({
                   status: 500,
-                  message: err.code
+                  message: err.code,
+                  data:{}
                 });
               } else if (conn) {
                 conn.query(
@@ -36,7 +36,8 @@ const userController = {
                     if (err) {
                       return res.status(500).json({
                         status: 500,
-                        message: err.sqlMessage
+                        message: err.sqlMessage,
+                        data:{}
                       });
                       logger.error(err.sqlMessage);
                     }
@@ -57,14 +58,16 @@ const userController = {
                 logger.error('error ', err);
                 return res.status(500).json({
                   status: 500,
-                  message: err.code
+                  message: err.code,
+                  data:{}
                 });
               } else if (conn) {
                 conn.query('SELECT * FROM `user`', function(err, results, fields) {
                   if (err) {
                     return res.status(500).json({
                       status: 500,
-                      message: err.sqlMessage
+                      message: err.sqlMessage,
+                      data:{}
                     });
                     logger.error(err.sqlMessage);
                   }
@@ -88,7 +91,8 @@ const userController = {
                 logger.error('error ', err);
                 return res.status(500).json({
                   status: 500,
-                  message: err.code
+                  message: err.code,
+                  data:{}
                 });
               } else if (conn) {
                 conn.query(
@@ -98,7 +102,8 @@ const userController = {
                     if (err) {
                       return res.status(500).json({
                         status: 500,
-                        message: err.sqlMessage
+                        message: err.sqlMessage,
+                        data:{}
                       });
                       logger.error(err.sqlMessage);
                     }
@@ -118,25 +123,29 @@ const userController = {
                 logger.error('error ', err);
                 return res.status(500).json({
                   status: 500,
-                  message: err.code
+                  message: err.code,
+                  data:{}
                 });
               } else if (conn) {
                 conn.query('SELECT * FROM `user`', function(err, results, fields) {
                   if (err) {
+                    logger.error(err.sqlMessage);
                     return res.status(500).json({
                       status: 500,
-                      message: err.sqlMessage
+                      message: err.sqlMessage,
+                      data:{}
                     });
-                    logger.error(err.sqlMessage);
+                    
                   }
                   return res.status(200).json({
                     status: 200,
                     message: 'Invalid filter parameters',
                     data: results
                   });
-                  pool.releaseConnection(conn);
+                  
                 });
               }
+              pool.releaseConnection(conn);
             });
           }
         } 
@@ -146,7 +155,8 @@ const userController = {
               logger.error('error ', err);
               return res.status(500).json({
                 status: 500,
-                message: err.code
+                message: err.code,
+                data:{}
               });
             } else if (conn) {
               conn.query(
@@ -155,7 +165,8 @@ const userController = {
                   if (err) {
                     return res.status(500).json({
                       status: 500,
-                      message: err.sqlMessage
+                      message: err.sqlMessage,
+                      data:{}
                     });
                     logger.error(err.sqlMessage);
                   }
@@ -183,7 +194,8 @@ const userController = {
             logger.error('error ', err)
             return res.status(500).json({
               status: 500,
-              message: err.message
+              message: err.message,
+              data:{}
             });
             return; // Stop de functie hier om te voorkomen dat het antwoord tweemaal wordt verzonden
           }
@@ -193,7 +205,8 @@ const userController = {
                 logger.error('Database error: ' + err.message);
                 return res.status(500).json({
                   status: 500,
-                  message: err.message
+                  message: err.message,
+                  data:{}
                 });
                 return; // Stop de functie hier om te voorkomen dat het antwoord tweemaal wordt verzonden
               }
@@ -203,7 +216,8 @@ const userController = {
                 logger.error('Gebruiker kan niet registreren: e-mailadres al in gebruik');
                 return res.status(403).json({
                   status: 403,
-                  message: 'User with specified email address already exists'
+                  message: 'User with specified email address already exists',
+                  data:{}
                 });
                 return; // Stop de functie hier om te voorkomen dat het antwoord tweemaal wordt verzonden
               }
@@ -237,7 +251,8 @@ const userController = {
                     logger.error('Database error: ' + err.message);
                     return res.status(500).json({
                       status: 500,
-                      message: err.message
+                      message: err.message,
+                      data:{}
                     });
                     return; // Stop de functie hier om te voorkomen dat het antwoord tweemaal wordt verzonden
                   }
@@ -274,7 +289,8 @@ const userController = {
             logger.error(err.code, err.syscall, err.address, err.port);
             return res.status(500).json({
               status: 500,
-              message: err.code
+              message: err.code,
+              data:{}
             });
           }
           if (conn) {
@@ -283,7 +299,8 @@ const userController = {
                 logger.error(err.message);
                 return res.status(409).json({
                   status: 409,
-                  message: err.message
+                  message: err.message,
+                  data:{}
                 });
               }
               if (results) {
@@ -310,7 +327,8 @@ const userController = {
             logger.error('error ', err)
             return res.status(500).json({
               status: 500,
-              message: err.message
+              message: err.message,
+              data:{}
             });
           }
           if(conn){
@@ -319,7 +337,8 @@ const userController = {
                 logger.error('Database error: ' + err.message);
                 return res.status(500).json({
                   status: 500,
-                  message: err.message
+                  message: err.message,
+                  data:{}
                 });
               }
       
@@ -327,7 +346,8 @@ const userController = {
                 logger.error(`Gebruiker met id ${id} wordt niet gevonden`)
                 return res.status(404).json({
                   status: 404,
-                  message: `Gebruiker met id ${id} wordt niet gevonden`
+                  message: `Gebruiker met id ${id} wordt niet gevonden`,
+                  data:{}
                 });
               } else {
                 const user = results[0];
@@ -374,7 +394,8 @@ const userController = {
               logger.error('error ', err)
               return res.status(404).json({
                 'status': 404,
-                'message': 'Connection could not be made -' ,err
+                'message': 'Connection could not be made -' ,err,
+                data:{}
               });
           }
           if (conn) {
@@ -403,7 +424,8 @@ const userController = {
                       logger.error('Database error: ' + err.message);
                       return res.status(500).json({
                         status: 500,
-                        message: err.message
+                        message: err.message,
+                        data:{}
                       });
                     }             
                     // Return the updated user data
@@ -412,7 +434,8 @@ const userController = {
                         logger.error('Database error: ' + err.message);
                         return res.status(500).json({
                           status: 500,
-                          message: err.message
+                          message: err.message,
+                          data:{}
                         });
                       }
             
@@ -452,7 +475,8 @@ const userController = {
                 logger.error('error ', err)
                 return res.status(404).json({
                   'status': 404,
-                  'message': 'Connection could not be made -' ,err
+                  'message': 'Connection could not be made -' ,err,
+                  data:{}
                 });
             }
             if (conn) {
@@ -465,22 +489,24 @@ const userController = {
                 if (results.length === 0) {
                   logger.error(`Gebruiker met id ${id} wordt niet gevonden`)
                   return  res.status(404).json({
-                    'status': 404,
-                    'message': 'User not found',
-                    'data': {}
+                    status: 404,
+                    message: 'User not found',
+                    data: {}
                   });
                 } else {
                   conn.query('DELETE FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {
                     if (err) {
                       logger.error('Database error: ' + err.message);
                       return  res.status(200).json({
-                        'status': 404,
-                        'message': `Database error `
+                        status: 404,
+                        message: `Database error `,
+                        data:{}
                       });
                     } else {
                       return  res.status(200).json({
-                        'status': 200,
-                        'message': `User met ID ${id} is verwijderd`,
+                        status: 200,
+                        message: `User met ID ${id} is verwijderd`,
+                        data:{}
                       });
                     }
                   });
