@@ -91,7 +91,11 @@ const userController = {
                 // Validate user data against the validation schema
                 const { error, value } = userSchema.validate(newUser);
                 if (error) {
-                  throw new Error(error.message);
+                  res.status(400).json({
+                    status: 400,
+                    message: 'User data is not complete',
+                    data: error.message
+                  });
                 }
       
                 // Insert the new user into the database

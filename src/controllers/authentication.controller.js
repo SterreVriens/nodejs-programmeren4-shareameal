@@ -23,59 +23,67 @@ module.exports = {
       }
       if (conn) {
         conn.query(
-            'SELECT * FROM `user` WHERE `emailAdress` = ?',
-            [req.body.emailAdress],
-            function(err, results, fields) {
-                if (err) {
-                    logger.error(err.sqlMessage);
-                    next({
-                        code:409,
-                        message: err.message
-                    })
-                  }
-                else if(results){
-                    logger.info('Found', results.lenght, 'results')
-
-                    if(results[0].password === req.body.password && results.length === 1){
-
-                        const {password,id, ...userInfo}= results[0]
-                        //de data die je meegeeft bij het token
-                        const payload ={
-                            userId : results[0].id
-                        }
-                        //Token genereren
-
-                        jwt.sign(payload,jwtSecretKey,
-                            {expiresIn: '2d'}, 
-                            (err, token)=> {
-                                if(token){
-                                    res.status(200).json({
-                                        code: 200,
-                                        message: 'Login endpoint',
-                                        data: {
-                                            id,
-                                            ...userInfo,
-                                            token
-                                        }
-                                    })
-                                }
-                            }
-                        )
-                    }else{
-                        //Error
-                        next({
-                            code:401,
-                            message: 'Not authorized',
-                            data: undefined
-                        })
-                    }
-                }    
+          'SELECT * FROM `user` WHERE `emailAdress` = ?',
+          [req.body.emailAdress],
+          function (err, results, fields) {
+            if (err) {
+              logger.error(err.sqlMessage);
+              next({
+                code: 404,
+                message: err.message,
+                data: undefined
+              })
+            } else if (results && results.length > 0) {
+              logger.info('Found', results.length, 'results')
+  
+              if (results[0].password === req.body.password && results.length === 1) {
+                const { password, id, ...userInfo } = results[0]
+                // de data die je meegeeft bij het token
+                const payload = {
+                  userId: results[0].id
                 }
+                // Token genereren
+  
+                jwt.sign(payload, jwtSecretKey,
+                  { expiresIn: '2d' },
+                  (err, token) => {
+                    if (token) {
+                      res.status(200).json({
+                        status: 200,
+                        message: 'Login endpoint',
+                        data: {
+                          id,
+                          ...userInfo,
+                          token
+                        }
+                      })
+                    }
+                  }
+                )
+              } else {
+                // Error
+                next({
+                  code: 400,
+                  message: 'Not authorized',
+                  data: undefined
+                })
+              }
+            } else {
+              // Geen resultaten gevonden
+              next({
+                code: 404,
+                message: 'User not found',
+                data: undefined
+              })
+            }
+  
+            pool.releaseConnection(conn); 
+          }
         );
-        pool.releaseConnection(conn);
       }
     });
   },
+  
 
   /**
    * Validatie functie voor /api/login,

@@ -15,7 +15,6 @@ describe('UC-201 Registreren als nieuwe user', () => {
     const newUser = {
       firstName: 'Hendrikk',
       lastName: 'van Dam',
-      emailAdress: 'hendrikk.vanD@email.nl',
       street: 'Straatnaam 123',
       city: 'Plaatsnaam',
       password: 'test1234',
@@ -30,16 +29,42 @@ describe('UC-201 Registreren als nieuwe user', () => {
       .end((err, res) => {
         assert(err === null);
   
-        let { data, message, status } = res.body;
+        res.body.should.be.an('object');
+        res.body.should.has.property('status').to.be.equal(400);
+        res.body.should.has.property('message').to.be.equal('User data is not complete');
+        res.body.should.has.property('data');
   
-        data.should.have.property('firstName').that.is.a('string').and.equals(newUser.firstName);
-        data.should.have.property('lastName').that.is.a('string').and.equals(newUser.lastName);
-        data.should.have.property('emailAdress').that.is.a('string').and.equals(newUser.emailAdress);
-        data.should.have.property('street').that.is.a('string').and.equals(newUser.street);
-        data.should.have.property('city').that.is.a('string').and.equals(newUser.city);
-        data.should.have.property('password').that.is.a('string');
-        data.should.have.property('phoneNumber').that.is.a('string').and.equals(newUser.phoneNumber);
+        done();
+      });
+  });
+  it('TC-201-4 Gebruiker bestaat al',(done) =>{
+    const newUser = {
+      firstName: 'Hendrikk',
+      lastName: 'van Dam',
+      emailAdress: 'hendrikk.vanDam@email.com',
+      street: 'Straatnaam 123',
+      city: 'Plaatsnaam',
+      password: 'test1234',
+      phoneNumber: '123456789'
+    };
+
   
+    // Uitvoeren van de test
+    chai
+      .request(server)
+      .post('/api/user')
+      .send(newUser)
+      .end((err, res) => {
+        assert(err === null);
+  
+        res.should.have.status(403);
+  
+        let {message, status } = res.body;
+  
+        status.should.equal(403);
+        message.should.be.a('string').that.contains('User with specified email address already exists');
+  
+        
   
         done();
       });
@@ -47,9 +72,9 @@ describe('UC-201 Registreren als nieuwe user', () => {
   it('TC-201-5 - User succesvol geregistreerd', (done) => {
     // Nieuwe gebruiker om te testen
     const newUser = {
-      firstName: 'Hendrikk',
-      lastName: 'van Dam',
-      emailAdress: 'hendrikk.vanDam@email.com',
+      firstName: 'Test',
+      lastName: 'Gebruiker',
+      emailAdress: 'test.gebruiker123@email.com',
       street: 'Straatnaam 123',
       city: 'Plaatsnaam',
       password: 'test1234',
@@ -73,41 +98,30 @@ describe('UC-201 Registreren als nieuwe user', () => {
         message.should.be.a('string').that.contains('User created');
         data.should.be.an('object');
   
+        pool.getConnection(function(err, conn) {
+          if (err) {
+            logger.error('error ', err);
+            next(err.message);
+          } else if (conn) {
+            conn.query(
+              'DELETE FROM `user` WHERE `emailAdress` = ?', [newUser.emailAdress],
+              function(err, results, fields) {
+                if (err) {
+                  res.status(500).json({
+                    statusCode: 500,
+                    message: err.sqlMessage
+                  });
+                }
+                
+              }
+            );
+            pool.releaseConnection(conn);
+          }
+        });  
   
         done();
       });
   
-  });
-  it('TC-201-4 Gebruiker bestaat al',(done) =>{
-    const newUser = {
-      firstName: 'Hendrikk',
-      lastName: 'van Dam',
-      emailAdress: 'hendrikk.vanDam@email.com',
-      street: 'Straatnaam 123',
-      city: 'Plaatsnaam',
-      password: 'test1234',
-      phoneNumber: '123456789'
-    };
-  
-    // Uitvoeren van de test
-    chai
-      .request(server)
-      .post('/api/user')
-      .send(newUser)
-      .end((err, res) => {
-        assert(err === null);
-  
-        res.should.have.status(403);
-  
-        let {message, status } = res.body;
-  
-        status.should.equal(403);
-        message.should.be.a('string').that.contains('User with specified email address already exists');
-  
-        
-  
-        done();
-      });
   });
 });  
 
@@ -125,8 +139,6 @@ describe('UC-202 Opvragen van overzicht van users', () => {
 
         status.should.equal(200);
         message.should.be.a('string').equal('Get all users');
-        //expect(res.body.data.length).to.be.gte(2);
-
 
         done();
       });
