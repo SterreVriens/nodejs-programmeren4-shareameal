@@ -12,12 +12,135 @@ const userController = {
       getAllUsers: function(req, res, next) {
         logger.info('Get all users');
         const queryField = Object.entries(req.query);
+        // Controleren of de filtervelden voorkomen in de gebruikerstabel
+        const validFilterFields = ['firstName', 'lastName','isActive','emailAdress','password','phoneNumber','roles','street','city']; 
       
-        if (queryField.length == 2) {
-          // do something
-        } else if (queryField.length == 1) {
-          // do something else
-        } else if (queryField.length == 0) {
+        if (queryField.length === 2) {
+          const [field1, value1] = queryField[0];
+          const [field2, value2] = queryField[1];
+        
+          if (validFilterFields.includes(field1) && validFilterFields.includes(field2)) {
+            // Uitvoeren van de filterquery
+            pool.getConnection(function(err, conn) {
+              if (err) {
+                logger.error('error ', err);
+                next({
+                  code: 500,
+                  message: err.code
+                });
+              } else if (conn) {
+                conn.query(
+                  'SELECT * FROM `user` WHERE ?? = ? AND ?? = ?',
+                  [field1, value1, field2, value2],
+                  function(err, results, fields) {
+                    if (err) {
+                      next({
+                        code: 500,
+                        message: err.sqlMessage
+                      });
+                      logger.error(err.sqlMessage);
+                    }
+                    console.log(field1, value1, field2, value2)
+                    res.status(200).json({
+                      code: 200,
+                      message: 'Get filtered users',
+                      data: results
+                    });
+                    pool.releaseConnection(conn);
+                  }
+                );
+              }
+            });
+          } else {
+            pool.getConnection(function(err, conn) {
+              if (err) {
+                logger.error('error ', err);
+                next({
+                  code: 500,
+                  message: err.code
+                });
+              } else if (conn) {
+                conn.query('SELECT * FROM `user`', function(err, results, fields) {
+                  if (err) {
+                    next({
+                      code: 500,
+                      message: err.sqlMessage
+                    });
+                    logger.error(err.sqlMessage);
+                  }
+                  res.status(200).json({
+                    code: 200,
+                    message: 'Invalid filter parameters',
+                    data: results
+                  });
+                  pool.releaseConnection(conn);
+                });
+              }
+            });
+          }
+        } 
+        else if (queryField.length === 1) {
+          const [field1, value1] = queryField[0];
+          if (validFilterFields.includes(field1)) {
+            // Uitvoeren van de filterquery
+            pool.getConnection(function(err, conn) {
+              if (err) {
+                logger.error('error ', err);
+                next({
+                  code: 500,
+                  message: err.code
+                });
+              } else if (conn) {
+                conn.query(
+                  'SELECT * FROM `user` WHERE ?? = ?',
+                  [field1, value1],
+                  function(err, results, fields) {
+                    if (err) {
+                      next({
+                        code: 500,
+                        message: err.sqlMessage
+                      });
+                      logger.error(err.sqlMessage);
+                    }
+                    res.status(200).json({
+                      code: 200,
+                      message: 'Get filtered users',
+                      data: results
+                    });
+                    pool.releaseConnection(conn);
+                  }
+                );
+              }
+            });
+          } else {
+            pool.getConnection(function(err, conn) {
+              if (err) {
+                logger.error('error ', err);
+                next({
+                  code: 500,
+                  message: err.code
+                });
+              } else if (conn) {
+                conn.query('SELECT * FROM `user`', function(err, results, fields) {
+                  if (err) {
+                    next({
+                      code: 500,
+                      message: err.sqlMessage
+                    });
+                    logger.error(err.sqlMessage);
+                  }
+                  res.status(200).json({
+                    code: 200,
+                    message: 'Invalid filter parameters',
+                    data: results
+                  });
+                  pool.releaseConnection(conn);
+                });
+              }
+            });
+          }
+        } 
+        else if (queryField.length == 0) {
           pool.getConnection(function(err, conn) {
             if (err) {
               logger.error('error ', err);
