@@ -406,18 +406,64 @@ describe('UC-205 Updaten van user', () => {
 
 describe('UC-206 Verwijderen van user', () =>{
 
+  let server; // Serverinstantie
+  let userToken;
+
+  before(function(done) {
+    // Start de server voordat de tests worden uitgevoerd
+    server = require('../../app');
+    
+  
+    // Login en haal het token op
+    const user = {
+      emailAdress: 'test.gebruiker123@email.com',
+      password: 'Secret12'
+    };
+  
+    chai
+      .request(server)
+      .post('/api/login')
+      .send(user)
+      .end(function(err, res) {
+        assert(err === null);
+        assert( res.status === 200);
+  
+        // Haal het token op uit de response
+        userToken = res.body.data.token;
+        done(); // Geef aan dat de before-haak is voltooid
+      });
+  });
   it('TC-206-1 Gebruiker bestaat niet', function(done) {
     const userId = 9999; // veronderstel dat dit een niet-bestaand gebruikersid iss
 
     chai.request(server)
     .delete(`/api/user/${userId}`)
+    .set('Authorization', `Bearer ${userToken}`)
+    .end((err, res) => {
+      assert(err === null);
+
+        let {data, message, status } = res.body;
+
+        status.should.equal(403);
+        message.should.be.a('string');
+        data.should.be.an('object').that.is.empty;
+
+        done();
+      });
+  }),
+  it('TC-301-2 Niet ingelogd', function(done) {
+    const userId = 9999; // veronderstel dat dit een niet-bestaand gebruikersid iss
+
+    chai.request(server)
+    .delete(`/api/user/${userId}`)
+    .set('Authorization', `Bearer 1234`)
     .end((err, res) => {
       assert(err === null);
 
         let {data, message, status } = res.body;
 
         status.should.equal(404);
-        message.should.be.a('string').equal(`User not found`);
+        message.should.be.a('string');
         data.should.be.an('object').that.is.empty;
 
         done();
@@ -429,6 +475,7 @@ describe('UC-206 Verwijderen van user', () =>{
       chai
       .request(server)
       .delete(`/api/user/${userId}`)
+      .set('Authorization', `Bearer ${userToken}`)
       .end((err, res) => {
         assert(err === null);
   

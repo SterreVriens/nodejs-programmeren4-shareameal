@@ -26,7 +26,9 @@ router.get('/:userId', userController.getUserById);
 router.put('/:userId', userController.updateUser)
   
   //UC-206 Verwijderen van user
-  router.delete('/:userId', userController.deleteUser );
+  router.delete('/:userId', 
+  authController.validateToken,
+  userController.deleteUser );
 
 
 module.exports = router;

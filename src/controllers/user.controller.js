@@ -466,57 +466,68 @@ const userController = {
       ,
       deleteUser: function(req, res) {
         logger.info('206 - Verwijderen van een user')
+        const idUser = req.userId;
 
         const id = parseInt(req.params.userId);
         console.log(id)
         logger.info('206 - Verwijderen van een user 1')
-        pool.getConnection(function(err, conn) {
-          logger.info('206 - Verwijderen van een user 3')
-            if (err) {
-                logger.error('error ', err)
-                return res.status(404).json({
-                  'status': 404,
-                  'message': 'Connection could not be made -' ,err,
+        if(idUser !== id){
+          logger.error('error ', `Gebruiker ${idUser} is niet de eigenaar van gebruiker ${id}`)
+                return res.status(403).json({
+                  'status': 403,
+                  'message': `Gebruiker ${idUser} is niet de eigenaar van gebruiker ${id}` ,
                   data:{}
                 });
-            }
-            if (conn) {
-              conn.query('SELECT * FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {
-                if (err) {
-                  logger.error('Database error: ' + err.message);
-                  return res.status(500)
-                }
-        
-                if (results.length === 0) {
-                  logger.error(`Gebruiker met id ${id} wordt niet gevonden`)
-                  return  res.status(404).json({
-                    status: 404,
-                    message: 'User not found',
-                    data: {}
+        }
+        else{
+          pool.getConnection(function(err, conn) {
+            logger.info('206 - Verwijderen van een user 3')
+              if (err) {
+                  logger.error('error ', err)
+                  return res.status(404).json({
+                    'status': 404,
+                    'message': 'Connection could not be made -' ,err,
+                    data:{}
                   });
-                } else {
-                  conn.query('DELETE FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {
-                    if (err) {
-                      logger.error('Database error: ' + err.message);
-                      return  res.status(200).json({
-                        status: 404,
-                        message: `Database error `,
-                        data:{}
-                      });
-                    } else {
-                      return  res.status(200).json({
-                        status: 200,
-                        message: `User met ID ${id} is verwijderd`,
-                        data:{}
-                      });
-                    }
-                  });
-                }
-              });
-              
-            }
-            pool.releaseConnection(conn);
-        });
+              }
+              if (conn) {
+                conn.query('SELECT * FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {
+                  if (err) {
+                    logger.error('Database error: ' + err.message);
+                    return res.status(500)
+                  }
+          
+                  if (results.length === 0) {
+                    logger.error(`Gebruiker met id ${id} wordt niet gevonden`)
+                    return  res.status(404).json({
+                      status: 404,
+                      message: 'User not found',
+                      data: {}
+                    });
+                  } else {
+                    conn.query('DELETE FROM `user` WHERE `id` = ?', [id], function(err, results, fields) {
+                      if (err) {
+                        logger.error('Database error: ' + err.message);
+                        return  res.status(200).json({
+                          status: 404,
+                          message: `Database error `,
+                          data:{}
+                        });
+                      } else {
+                        return  res.status(200).json({
+                          status: 200,
+                          message: `User met ID ${id} is verwijderd`,
+                          data:{}
+                        });
+                      }
+                    });
+                  }
+                });
+                
+              }
+              pool.releaseConnection(conn);
+          });
+        }
     }
     
 }
