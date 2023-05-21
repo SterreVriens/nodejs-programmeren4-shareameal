@@ -28,12 +28,12 @@ const mealController = {
                         status: 400,
                         message: error.message,
                         data: {}
-                    });
-                    
-                    
+                    });     
                 }
+                const dateTime = new Date(meal.dateTime).toISOString().slice(0, 19).replace('T', ' ');
+
                 pool.query('INSERT INTO `meal`(`isActive`, `isVega`, `isVegan`, `isToTakeHome`, `dateTime`, `maxAmountOfParticipants`, `price`, `imageUrl`, `cookId`, `name`, `description`, `allergenes`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
-                [meal.isActive, meal.isVega, meal.isVegan, meal.isToTakeHome, meal.dateTime, meal.maxAmountOfParticipants, meal.price, meal.imageUrl, id, meal.name, meal.description, meal.allergenes],
+                [meal.isActive, meal.isVega, meal.isVegan, meal.isToTakeHome, dateTime, meal.maxAmountOfParticipants, meal.price, meal.imageUrl, id, meal.name, meal.description, meal.allergenes],
                 function(err, results, fields) {
                     if (err) {
                       logger.error(err.sqlMessage);
