@@ -12,12 +12,12 @@ module.exports = {
    * login
    * Retourneer een geldig token indien succesvol
    */
-  login(req, res, next) {
+  login(req, res) {
     pool.getConnection((err, conn) => {
       if (err) {
         logger.error('Error getting connection from pool');
-        next({
-          code: 500,
+        return res.status(500).json({
+          status: 500,
           message: err.code
         });
       }
@@ -28,10 +28,10 @@ module.exports = {
           function (err, results, fields) {
             if (err) {
               logger.error(err.sqlMessage);
-              next({
-                code: 404,
+              return res.status(404).json({
+                status: 404,
                 message: err.message,
-                data: undefined
+                data: {}
               })
             } else if (results && results.length > 0) {
               logger.info('Found', results.length, 'results')
@@ -48,7 +48,7 @@ module.exports = {
                   { expiresIn: '2d' },
                   (err, token) => {
                     if (token) {
-                      res.status(200).json({
+                      return res.status(200).json({
                         status: 200,
                         message: 'Login endpoint',
                         data: {
@@ -62,18 +62,18 @@ module.exports = {
                 )
               } else {
                 // Error
-                next({
-                  code: 400,
+                return res.status(400).json({
+                  status: 400,
                   message: 'Not authorized',
-                  data: undefined
+                  data: {}
                 })
               }
             } else {
               // Geen resultaten gevonden
-              next({
-                code: 404,
+              return res.status(404).json({
+                status: 404,
                 message: 'User not found',
-                data: undefined
+                data: {}
               })
             }
   
@@ -102,7 +102,7 @@ module.exports = {
       );
       next();
     } catch (ex) {
-      res.status(422).json({
+      return res.status(422).json({
         error: ex.toString(),
         datetime: new Date().toISOString()
       });
@@ -119,8 +119,8 @@ module.exports = {
 
     const authHeader = req.headers.authorization;
     if (!authHeader) {
-      next({
-        code: 401,
+      return res.status().json({
+        status: 401,
         message: 'Authorization header missing!',
         data: undefined
       });
@@ -131,8 +131,8 @@ module.exports = {
 
         jwt.verify(token, jwtSecretKey,(err, payload)=>{
             if(err){
-                next({
-                    code: 401,
+                return res.status().json({
+                    status: 401,
                     message: 'Not authorized',
                     data: undefined
                 });

@@ -10,7 +10,7 @@ chai.use(chaiHttp);
 describe('UC-101 Inloggen', () => {
     it('TC-101-1 Verplicht veld ontbreekt', (done) =>{
         const login = {
-            emailAdress: 'hendrikk.vanDam@email.com'
+            emailAdress: 'm.vandullemen@server.nl'
           };
     chai
       .request(server)
@@ -26,8 +26,8 @@ describe('UC-101 Inloggen', () => {
     }),
     it('TC-101-2 Niet-valide wachtwoord', (done) =>{
         const login = {
-            emailAdress: "hendrikk.vanDam@email.com",
-            password: "s"
+            emailAdress: "m.vandullemen@server.nl",
+            password: "secre"
           };
         chai
           .request(server)

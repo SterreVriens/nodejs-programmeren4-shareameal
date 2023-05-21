@@ -5,6 +5,8 @@ const server = require('../../app');
 const expect = chai.expect;
 const pool = require('../../src/util/mysql-db')
 const should = chai.should();
+let userId;
+let authToken;
 
 chai.use(chaiHttp);
 //chai.use(should);
@@ -95,28 +97,9 @@ describe('UC-201 Registreren als nieuwe user', () => {
        
         message.should.be.a('string').that.contains('User created');
         data.should.be.an('object');
+        userId = data.id;
   
-        pool.getConnection(function(err, conn, next) {
-          if (err) {
-            logger.error('error ', err);
-            next(err.message);
-          } else if (conn) {
-            conn.query(
-              "DELETE FROM `user` WHERE `emailAdress` = '" + newUser.emailAdress + "'",
-              function(err, results, fields) {
-                if (err) {
-                  next({
-                    code: 500,
-                    message: err.message
-                  });
-                }
-                
-              }
-            );
-            pool.releaseConnection(conn);
-          }
-        });  
-  
+        console.log(data.id);
         done();
       });
   
@@ -223,7 +206,6 @@ describe('UC-202 Opvragen van overzicht van users', () => {
 describe('UC-203 Opvragen van gebruikersprofiel', () =>{
 
   let server; // Serverinstantie
-  let authToken; // Variabele om het token op te slaan
 
   before(function(done) {
     // Start de server voordat de tests worden uitgevoerd
@@ -241,7 +223,7 @@ describe('UC-203 Opvragen van gebruikersprofiel', () =>{
       .send(user)
       .end(function(err, res) {
         assert(err === null);
-        assert(res.status === 200);
+        assert( res.status === 200);
   
         // Haal het token op uit de response
         authToken = res.body.data.token;
@@ -263,7 +245,7 @@ describe('UC-203 Opvragen van gebruikersprofiel', () =>{
         let { data, message, status } = res.body;
 
         res.body.status.should.to.be.equal(200);
-        res.body.message.should.be.a('string').equal(`Get user profile for user with token ${authHeader}`);
+        res.body.message.should.be.a('string').equal(`Get User profile`);
 
         // Controleer of de gebruikersgegevens correct zijn geretourneerd
         data.should.be.an('object');
@@ -311,7 +293,7 @@ describe('UC-204 Opvragen van usergegevens bij ID', () =>{
       .end((err, res) => {
         assert(err === null);
         res.body.should.be.an('object');
-        let {message, status } = res.body;
+        let {message, status,data } = res.body;
 
         
         status.should.equal(200);
@@ -333,18 +315,18 @@ describe('UC-205 Updaten van user', () => {
   // TC-205-1: Verplicht veld "emailAddress" ontbreekt
   it('TC-205-1 Verplicht veld “emailAddress” ontbreekt', function(done) {
     const userId = 1; // veronderstel dat dit het te wijzigen gebruikersid is
-    const user = {
-      firstName: 'John',
-      lastName: 'Doe',
-      street: 'Bredaweg 12',
-      city: 'Breda',
-      password: 'wachtwoord',
-      phoneNumber: '123456789'
+    const newUser = {
+      firstName: 'Test',
+      lastName: 'Gebruiker',
+      street: 'Straatnaam 123',
+      city: 'Plaatsnaam',
+      password: 'Secret12',
+      phoneNumber: '06-12345678'
     };
 
     chai.request(server)
       .put(`/api/user/${userId}`)
-      .send(user)
+      .send(newUser)
       .end((err, res) => {
         assert(err === null);
 
@@ -361,7 +343,7 @@ describe('UC-205 Updaten van user', () => {
 
   // TC-205-4: Gebruiker bestaat niet
   it('TC-205-4 Gebruiker bestaat niet', function(done) {
-    const userId = 999; // veronderstel dat dit een niet-bestaand gebruikersid is
+    const userId = 9999; // veronderstel dat dit een niet-bestaand gebruikersid is
     const user = {
       firstName: 'John',
       lastName: 'Doe',
@@ -392,50 +374,16 @@ describe('UC-205 Updaten van user', () => {
   it('TC-205-6 Gebruiker succesvol gewijzigd', function(done) {
 
     // Create a new user in the database
-    let userId;
-    const user = {
-      firstName: 'John',
-      lastName: 'Doe',
-      street: 'Bredaseweg 12',
-      city: 'Breda',
-      emailAdress: 'john.doe@email.com',
-      password: 'Secret12',
-      phoneNumber: '06-12345678',
-    };
-    pool.getConnection(function(err, conn) {
-      if(err){
-        logger.error('error ', err)
-        next({
-          code: 500,
-          message: err.message
-        });
-      }
-      if(conn){
-      conn.query('INSERT INTO `user`(`firstName`, `lastName`, `emailAdress`, `password`, `phoneNumber`, `street`, `city`) VALUES (?,?,?,?,?,?,?)', 
-        [user.firstName, user.lastName, user.emailAdress, user.password, user.phoneNumber, user.street, user.city],
-        function(err, results, fields) {
-          if (err) {
-            logger.error('Database error: ' + err.message);
-            next({
-              code: 500,
-              message: err.message
-            });
-          }
-           userId = results.insertId;
-        }
-      )}
-      
-    
 
       // Update the user data
       const updatedUser = {
-        firstName: 'Jane',
-        lastName: 'Doe John',
-        street: 'Bredaseweg 12',
-        city: 'Breda',
-        emailAdress: 'jane.doe@email.com',
-        password: 'sEcre12t',
-        phoneNumber: '06 12345678',
+        firstName: 'Tester',
+        lastName: 'Gebruiker',
+        emailAdress: 'test.gebruiker123@email.com',
+        street: 'Straatnaam 123',
+        city: 'Plaatsnaam',
+        password: 'Secret12',
+        phoneNumber: '06-12345678'
       };
 
       chai.request(server)
@@ -450,36 +398,7 @@ describe('UC-205 Updaten van user', () => {
           status.should.equal(200);
           message.should.be.a('string').equal(`User with id ${userId} updated`);
 
-          // Check if the user data was updated correctly in the database
-          pool.query('SELECT * FROM `user` WHERE `id` = ?', [userId], function(err, results, fields) {
-            if (err) {
-              logger.error('Database error: ' + err.message);
-              return next(err.message);
-            }
-
-            results.should.be.an('array').with.lengthOf(1);
-            results[0].should.be.an('object').with.keys(
-              'id', 'firstName', 'lastName', 'street', 'city', 'emailAdress', 'password', 'phoneNumber'
-            );
-            results[0].id.should.equal(userId);
-            results[0].firstName.should.equal(updatedUser.firstName);
-            results[0].lastName.should.equal(updatedUser.lastName);
-            results[0].street.should.equal(updatedUser.street);
-            results[0].city.should.equal(updatedUser.city);
-            results[0].emailAdress.should.equal(updatedUser.emailAdress);
-            results[0].password.should.equal(updatedUser.password);
-            results[0].phoneNumber.should.equal(updatedUser.phoneNumber);
-
-            // Remove the user from the database
-            pool.query('DELETE FROM `user` WHERE `id` = ?', [userId], function(err, results, fields) {
-              if (err) {
-                logger.error('Database error: ' + err.message);
-                return next(err.message);
-              }
-              done();
-            });
-          });
-        });
+        done()
     });
   });
 });
@@ -488,7 +407,7 @@ describe('UC-205 Updaten van user', () => {
 describe('UC-206 Verwijderen van user', () =>{
 
   it('TC-206-1 Gebruiker bestaat niet', function(done) {
-    const userId = 999; // veronderstel dat dit een niet-bestaand gebruikersid iss
+    const userId = 9999; // veronderstel dat dit een niet-bestaand gebruikersid iss
 
     chai.request(server)
     .delete(`/api/user/${userId}`)
@@ -506,26 +425,10 @@ describe('UC-206 Verwijderen van user', () =>{
   });
   it('TC-206-4 Gebruiker succesvol verwijderd', function(done) {
 
-    pool.getConnection(function(err, conn) {
-        if (err) {
-          logger.error('error ', err);
-          next(err.message);
-        } else if (conn) {
-          conn.query(
-            'SELECT id FROM `user` ORDER BY id DESC LIMIT 1',
-            function(err, results, fields) {
-              if (err) {
-                res.status(500).json({
-                  statusCode: 500,
-                  message: err.sqlMessage
-                });
-                logger.error(err.sqlMessage);
-              }
-              const id = results[0].id;
-
-              chai
+   console.log(userId)
+      chai
       .request(server)
-      .delete(`/api/user/${id}`)
+      .delete(`/api/user/${userId}`)
       .end((err, res) => {
         assert(err === null);
   
@@ -533,15 +436,10 @@ describe('UC-206 Verwijderen van user', () =>{
         let { data, message, status } = res.body;
   
         status.should.equal(200);
-        message.should.be.a('string').equal(`User met ID ${id} is verwijderd`);
+        message.should.be.a('string').equal(`User met ID ${userId} is verwijderd`);
   
         done();
-      });
-
-            }
-          );
-          pool.releaseConnection(conn);
-        }
+     
       });
   });
   

@@ -28,7 +28,7 @@ app.use('*', (req, res, next) => {
 //UC-102 Opvragen van systeeminformatie
 app.get('/api/info', (req, res) => {
   logger.info('Haal server info op')
-  res.status(200).json({
+  return res.status(200).json({
     'status': 200,
     'message': 'Server info-endpoint',
     'data': {
@@ -41,7 +41,7 @@ app.get('/api/info', (req, res) => {
 
 app.use('*', (req, res) => {
   logger.warn('Invalid endpoint: '+ req.path)
-  res.status(404).json({
+  return res.status(404).json({
     'status': 404,
     'message': 'Endpoint not found',
     'data': {}
@@ -51,7 +51,7 @@ app.use('*', (req, res) => {
 // Express error handler
 app.use((err, req, res, next) => {
   logger.error(err.code, err.message);
-  res.status(err.code).json({
+  return res.status(err.code).json({
     status: err.code,
     message: err.message,
     data: {}
