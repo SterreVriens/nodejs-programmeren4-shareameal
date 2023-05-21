@@ -89,12 +89,14 @@ describe('UC-301 - Aanmaken maaltijd aangeroepen', () => {
       });
     }),
     it('TC-301-3 Maaltijd succesvol toegevoegd', (done) =>{
+        const dateTime = new Date('2023-05-17T10:00:00Z').toISOString().slice(0, 19).replace('T', ' ');
+
         const meal = {
             isActive: true,
             isVega: false,
             isVegan: true,
             isToTakeHome: true,
-            dateTime: '2023-05-17T10:00:00Z',
+            dateTime,
             maxAmountOfParticipants: 6,
             price: 9.99,
             name: 'Pizza',
