@@ -207,10 +207,10 @@ const userController = {
                 });
               } else {
                 const user = results[0];
-                next({
+                res.status(200).json({
                   code: 200,
                   message:  `Get user with id ${id}`,
-                  data: user
+                  data:  results[0]
                 });
               }
             });
@@ -250,7 +250,7 @@ const userController = {
           if (err) {
             logger.error('Database error: ' + err.message);
             next({
-              code: 500,
+              code: 404,
               message: err.message
             });
           }
@@ -286,12 +286,13 @@ const userController = {
                   message: err.message
                 });
               }
-      
-              next({
-                status: 200,
+    
+              res.status(200).json({
+                code: 200,
                 message: `User with id ${id} updated`,
                 data: results[0]
-              });
+            });
+              
             });
           });
         });

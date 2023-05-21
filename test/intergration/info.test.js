@@ -13,7 +13,7 @@ describe('UC-102 Informatie opvragen', function () {
       .get('/api/info')
       .end((err, res) => {
         res.body.should.be.an('object');
-        res.body.should.has.property('status').to.be.equal(201);
+        res.body.should.has.property('status').to.be.equal(200);
         res.body.should.has.property('message');
         res.body.should.has.property('data');
         let { data, message } = res.body;

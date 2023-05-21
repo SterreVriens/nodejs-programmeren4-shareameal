@@ -46,7 +46,7 @@ const mealController = {
                     //Door results.insertId toe te wijzen aan de variabele insertedMealId, kun je het ID gebruiken voor verdere verwerking of om te tonen in de responspayload.
                     const insertedMealId = results.insertId;
                     const completeMeal = {mealId:insertedMealId,meal}
-                    res.status(200).json({
+                    res.status(201).json({
                         'status': 201,
                         'message': 'Create meals',
                         'data': completeMeal

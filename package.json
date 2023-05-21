@@ -17,6 +17,7 @@
     "jsonwebtoken": "^9.0.0",
     "mocha": "^10.2.0",
     "mysql2": "^3.2.3",
+    "should": "^13.2.3",
     "tracer": "^1.1.6"
   },
   "devDependencies": {
